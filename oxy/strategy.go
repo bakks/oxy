@@ -1,7 +1,9 @@
 package oxy
 
+import "./mtgox"
+
 func Run() {
-  exch := NewMtGox()
+  var exch Exchange = mtgox.New()
 
   exch.Info()
   exch.Balance()
