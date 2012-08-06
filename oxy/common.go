@@ -7,6 +7,8 @@ const BTC Currency = 0
 const USD Currency = 1
 
 type Exchange interface {
+  FetchDepth() error
+  Depth() SimpleBook
   Info()
   Balance()
 }

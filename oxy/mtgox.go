@@ -24,7 +24,8 @@ type MtGox struct {
   key         string
   secret      string
   quoteTime   time.Time
-  book        SimpleBook
+  depth       SimpleBook
+  orders      SimpleBook
 }
 
 func NewMtGox() *MtGox {
@@ -33,25 +34,39 @@ func NewMtGox() *MtGox {
   x.domain = "https://mtgox.com"
   x.key = MTGOX_KEY
   x.secret = MTGOX_SECRET
-  x.book = *NewSimpleBook()
+  x.depth = *NewSimpleBook()
+  x.orders = *NewSimpleBook()
 
   return &x
 }
 
-func (x *MtGox) GetDepth() error {
-  r := x.request("/api/1/BTCUSD/fulldepth", nil)
-  x.book.Clear()
+func (x *MtGox) Depth() SimpleBook {
+  return x.depth
+}
 
-  bids := r["bids"].([]map[string]interface{})
+func (x *MtGox) FetchDepth() error {
+  r := x.request("/api/1/BTCUSD/fulldepth", nil)
+  x.depth.Clear()
+
+  bids := r["bids"].([]interface{})
+  asks := r["asks"].([]interface{})
 
   for _, b := range bids {
-    q := NewQuote(b["price"].(float64), b["size"].(float64), true)
-    t,_ := strconv.ParseInt(b["stamp"].(string), 10, 64)
+    bid := b.(map[string]interface{})
+    q := NewQuote(bid["price"].(float64), bid["amount"].(float64), true)
+    t,_ := strconv.ParseInt(bid["stamp"].(string), 10, 64)
 
-    q.Start = time.Unix(t / 1000, t - (t / 1000))
-    fmt.Println(q.Start)
+    q.Start = time.Unix(t / 1000000, t - (t / 1000000)).UTC()
+    x.depth.Add(q)
+  }
 
-    x.book.Add(q)
+  for _, a := range asks {
+    ask := a.(map[string]interface{})
+    q := NewQuote(ask["price"].(float64), ask["amount"].(float64), false)
+    t,_ := strconv.ParseInt(ask["stamp"].(string), 10, 64)
+
+    q.Start = time.Unix(t / 1000000, t - (t / 1000000)).UTC()
+    x.depth.Add(q)
   }
 
   x.quoteTime = time.Now()
@@ -109,7 +124,7 @@ func (x *MtGox) request(path string, args map[string]interface{}) map[string]int
   req.Header.Add("Rest-Sign", signature)
   req.Header.Add("Content-type", "application/x-www-form-urlencoded")
 
-  r,err := x.client.Do(req)
+  r, err := x.client.Do(req)
 
   if err != nil {
     fmt.Println("error", err)
@@ -119,15 +134,31 @@ func (x *MtGox) request(path string, args map[string]interface{}) map[string]int
   defer r.Body.Close()
 
   body,_ := ioutil.ReadAll(r.Body)
-  fmt.Println(string(body))
+  //fmt.Println(string(body))
 
   var v map[string]interface{}
-  json.Unmarshal(body, v)
+  err = json.Unmarshal(body, &v)
 
-  if v["result"] != "success" {
-    fmt.Println("result not success")
+  if err != nil {
+    fmt.Println(err)
+  }
+
+  if v == nil {
+    fmt.Println("Returned JSON unmarshaled to nil")
+  }
+
+  if v["result"] != nil && v["result"] != "success" {
+    fmt.Println("result not success: " + v["result"].(string))
     return nil
   }
 
-  return v["return"].(map[string]interface{})
+  if v["return"] != nil {
+    fmt.Println("return return")
+    return v["return"].(map[string]interface{})
+  } else {
+    fmt.Println("return V")
+    return v
+  }
+
+  return nil
 }
