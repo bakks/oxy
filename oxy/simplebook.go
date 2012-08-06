@@ -29,26 +29,47 @@ func sliceInsert(s []Quote, index int, value Quote) []Quote {
   return s
 }
 
-func (x *SimpleBook) AddQuote(quote Quote) {
-  if quote.isBuy {
-    if len(x.bids) == 0 || quote.price < x.bids[len(x.bids)-1].price {
+func (x *SimpleBook) Clear() {
+  x.bids = x.bids[:0]
+  x.asks = x.asks[:0]
+}
+
+func (x *SimpleBook) Add(quote Quote) {
+  if quote.IsBuy {
+    if len(x.bids) == 0 || quote.Price < x.bids[len(x.bids)-1].Price {
       x.bids = append(x.bids, quote)
     } else {
       i := 0
-      for ; quote.price < x.bids[i].price; i++ {}
+      for ; quote.Price < x.bids[i].Price; i++ {}
 
       x.bids = sliceInsert(x.bids, i, quote)
     }
   } else {
-    if len(x.asks) == 0 || quote.price > x.asks[len(x.asks)-1].price {
+    if len(x.asks) == 0 || quote.Price > x.asks[len(x.asks)-1].Price {
       x.asks = append(x.asks, quote)
     } else {
       i := 0
-      for ; quote.price > x.asks[i].price; i++ {}
+      for ; quote.Price > x.asks[i].Price; i++ {}
 
       x.asks = sliceInsert(x.asks, i, quote)
     }
   }
+}
+
+func (x *SimpleBook) BidsLength() int {
+  return len(x.bids)
+}
+
+func (x *SimpleBook) AsksLength() int {
+  return len(x.asks)
+}
+
+func (x *SimpleBook) GetBid(i int) Quote {
+  return x.bids[i]
+}
+
+func (x *SimpleBook) GetAsk(i int) Quote {
+  return x.asks[i]
 }
 
 func (x *SimpleBook) Bid() (Quote, error) {

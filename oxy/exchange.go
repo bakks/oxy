@@ -13,23 +13,23 @@ type Exchange interface {
 
 
 type Trade struct {
-  price     float64
-  size      float64
-  buy       Currency
-  sell      Currency
+  Price     float64
+  Size      float64
+  Buy       Currency
+  Sell      Currency
 }
 
 type Quote struct {
-  price     float64
-  size      float64
-  isBuy     bool
-  currency  Currency
-  start     time.Time
-  end       time.Time
+  Price     float64
+  Size      float64
+  IsBuy     bool
+  Currency  Currency
+  Start     time.Time
+  End       time.Time
 }
 
 func NewQuote(price, size float64, isBuy bool) Quote {
-  return Quote{price: price, size: size, isBuy: isBuy, currency: USD}
+  return Quote{Price: price, Size: size, IsBuy: isBuy, Currency: USD}
 }
 
 func EmptyQuote() Quote {
