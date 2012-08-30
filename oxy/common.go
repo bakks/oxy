@@ -1,10 +1,20 @@
 package oxy
 
 import "time"
+import "errors"
 
 type Currency int32
 const BTC Currency = 0
 const USD Currency = 1
+
+func CastCurrency(currencyStr string) (error, Currency) {
+  switch currencyStr {
+    case "BTC": return nil, BTC
+    case "USD": return nil, USD
+  }
+
+  return errors.New("could not match string to currency"), BTC
+}
 
 type Exchange interface {
   FetchDepth() error
