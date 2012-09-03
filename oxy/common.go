@@ -2,6 +2,7 @@ package oxy
 
 import "time"
 import "errors"
+import "net/http"
 
 type Currency int32
 const BTC Currency = 0
@@ -18,17 +19,27 @@ func CastCurrency(currencyStr string) (error, Currency) {
 
 type Exchange interface {
   FetchDepth() error
-  Depth() SimpleBook
-  Info()
-  Balance()
+  FetchOrders() error
+  FetchAccounts() error
+  FetchTrades() error
+  GetDepth() SimpleBook
+  GetTrades() []Trade
+  GetFee() float64
+  GetBalance(Currency) float64
+  GetMidpoint() float64
+  GetLast() float64
 }
 
+type HTTPClient interface {
+  Do(*http.Request) (string, error)
+}
 
 type Trade struct {
   Price     float64
   Size      float64
-  Buy       Currency
-  Sell      Currency
+  Currency  Currency
+  IsBuy     bool
+  Timestamp time.Time
 }
 
 type Quote struct {
@@ -46,6 +57,10 @@ func NewQuote(price, size float64, isBuy bool) Quote {
 
 func EmptyQuote() Quote {
   return NewQuote(0, 0, true)
+}
+
+func NewTrade(price, size float64, c Currency, isBuy bool, Timestamp time.Time) Trade {
+  return Trade{Price: price, Size: size, Currency: c, IsBuy: isBuy}
 }
 
 
