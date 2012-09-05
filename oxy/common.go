@@ -2,6 +2,7 @@ package oxy
 
 import "time"
 import "errors"
+import "strconv"
 import "net/http"
 
 type Currency int32
@@ -15,6 +16,15 @@ func CastCurrency(currencyStr string) (error, Currency) {
   }
 
   return errors.New("could not match string to currency"), BTC
+}
+
+func CurrencyString(c Currency) string {
+  switch c {
+    case BTC: return "BTC"
+    case USD: return "USD"
+  }
+
+  return strconv.Itoa(int(c))
 }
 
 type Exchange interface {
@@ -59,8 +69,8 @@ func EmptyQuote() Quote {
   return NewQuote(0, 0, true)
 }
 
-func NewTrade(price, size float64, c Currency, isBuy bool, Timestamp time.Time) Trade {
-  return Trade{Price: price, Size: size, Currency: c, IsBuy: isBuy}
+func NewTrade(price, size float64, c Currency, isBuy bool, timestamp time.Time) Trade {
+  return Trade{Price: price, Size: size, Currency: c, IsBuy: isBuy, Timestamp: timestamp}
 }
 
 

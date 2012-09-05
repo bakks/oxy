@@ -11,9 +11,11 @@
       "item":"BTC",
       "trade_type":"bid",
       "primary":"Y",
-      "properties":"limit"},
+      "properties":"limit"
+    },
     {
-      "date":1346286717,"price":"10.9",
+      "date":1346286717,
+      "price":"10.9",
       "amount":"9.02391926",
       "price_int":"1090000",
       "amount_int":"902391926",
@@ -25,7 +27,8 @@
       "properties":"limit"
     },
     {
-      "date":1346286762,"price":"10.89734",
+      "date":1346286762,
+      "price":"10.89734",
       "amount":"0.01",
       "price_int":"1089734",
       "amount_int":"1000000",
@@ -37,7 +40,8 @@
       "properties":"limit,mixed_currency"
     },
     {
-      "date":1346286790,"price":"10.8591",
+      "date":1346286790,
+      "price":"10.8591",
       "amount":"1",
       "price_int":"1085910",
       "amount_int":"100000000",
@@ -49,7 +53,8 @@
       "properties":"limit"
     },
     {
-      "date":1346286859,"price":"10.89733",
+      "date":1346286859,
+      "price":"10.89733",
       "amount":"1.44584032",
       "price_int":"1089733",
       "amount_int":"144584032",
@@ -58,7 +63,11 @@
       "item":"BTC",
       "trade_type":"bid",
       "primary":"Y",
-      "properties":"market"},{"date":1346286920,"price":"10.89733",
+      "properties":"market"
+    },
+    {
+      "date":1346286920,
+      "price":"10.89733",
       "amount":"1.35220968",
       "price_int":"1089733",
       "amount_int":"135220968",

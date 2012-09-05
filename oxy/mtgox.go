@@ -82,6 +82,10 @@ func (x *MtGox) GetResponses() {
   x.request(MTGOX_ORDERS, nil)
 }
 
+func (x *MtGox) GetOrders() SimpleBook {
+  return x.orders
+}
+
 func (x *MtGox) GetDepth() SimpleBook {
   return x.depth
 }
@@ -124,11 +128,24 @@ func (x *MtGox) FetchOrders() error {
   for _, o := range r {
     order := o.(map[string]interface{})
     priceBlock := order["price"].(map[string]interface{})
-    price := priceBlock["value"].(float64)
+    price, err := strconv.ParseFloat(priceBlock["value"].(string), 64)
+
+    if err != nil {
+      return err
+    }
+
     sizeBlock := order["amount"].(map[string]interface{})
-    size := sizeBlock["size"].(float64)
+    size, err := strconv.ParseFloat(sizeBlock["value"].(string), 64)
+
+    if err != nil {
+      return err
+    }
+
     orderType := order["type"].(string)
+    timestamp := time.Unix(int64(order["date"].(float64)), 0).UTC()
+
     q := NewQuote(price, size, (orderType == "bid"))
+    q.Start = timestamp
     x.orders.Add(q)
   }
 
@@ -141,20 +158,18 @@ func (x *MtGox) FetchTrades() error {
 
   for _, t := range r {
     tradeDoc := t.(map[string]interface{})
-    priceInt, err := strconv.ParseInt(tradeDoc["price_int"].(string), 10, 64)
+    price, err := strconv.ParseFloat(tradeDoc["price"].(string), 64)
 
     if err != nil {
       return err
     }
 
-    sizeInt, err := strconv.ParseInt(tradeDoc["amount_int"].(string), 10, 64)
+    size, err := strconv.ParseFloat(tradeDoc["amount"].(string), 64)
 
     if err != nil {
       return err
     }
 
-    price := float64(priceInt)
-    size := float64(sizeInt)
     err, currency := CastCurrency(tradeDoc["price_currency"].(string))
 
     if err != nil {
@@ -172,7 +187,7 @@ func (x *MtGox) FetchTrades() error {
       return errors.New("invalid trade_type")
     }
 
-    timestamp := time.Unix(tradeDoc["date"].(int64), 0).UTC()
+    timestamp := time.Unix(int64(tradeDoc["date"].(float64)), 0).UTC()
     trade := NewTrade(price, size, currency, isBuy, timestamp)
     x.trades = append(x.trades, trade)
   }
@@ -196,7 +211,12 @@ func (x *MtGox) FetchAccounts() error {
 
     mapValue := v.(map[string]interface{})
     balance := mapValue["Balance"].(map[string]interface{})
-    value := balance["value"].(float64)
+    value, err := strconv.ParseFloat(balance["value"].(string), 64)
+
+    if err != nil {
+      return err
+    }
+
     x.balance[currency] = value
   }
 
@@ -280,8 +300,6 @@ func (x *MtGox) request(path string, args map[string]interface{}) interface{} {
   if err != nil {
     return nil
   }
-
-  fmt.Println(body)
 
   var v map[string]interface{}
   err = json.Unmarshal([]byte(body), &v)

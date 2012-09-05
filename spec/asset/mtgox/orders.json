@@ -1,1 +1,39 @@
-{"result":"success","return":[{"oid":"f4a11c80-a27e-40a7-9913-2706f79ef1f6","currency":"USD","item":"BTC","type":"bid","amount":{"value":"0.10000000","value_int":"10000000","display":"0.10000000\u00a0BTC","display_short":"0.10\u00a0BTC","currency":"BTC"},"effective_amount":{"value":"0.10000000","value_int":"10000000","display":"0.10000000\u00a0BTC","display_short":"0.10\u00a0BTC","currency":"BTC"},"price":{"value":"0.00001","value_int":"1","display":"$0.00001","display_short":"$0.00","currency":"USD"},"status":"open","date":1346373055,"priority":"1346373055313253","actions":[]}]}
+{
+  "result":"success",
+  "return":[
+    {
+      "oid":"f4a11c80-a27e-40a7-9913-2706f79ef1f6",
+      "currency":"USD",
+      "item":"BTC",
+      "type":"bid",
+      "amount":
+        {
+          "value":"0.10000000",
+          "value_int":"10000000",
+          "display":"0.10000000\u00a0BTC",
+          "display_short":"0.10\u00a0BTC",
+          "currency":"BTC"
+        },
+      "effective_amount":
+        {
+          "value":"0.10000000",
+          "value_int":"10000000",
+          "display":"0.10000000\u00a0BTC",
+          "display_short":"0.10\u00a0BTC",
+          "currency":"BTC"
+        },
+      "price":
+        {
+          "value":"0.00001",
+          "value_int":"1",
+          "display":"$0.00001",
+          "display_short":"$0.00",
+          "currency":"USD"
+        },
+      "status":"open",
+      "date":1346373055,
+      "priority":"1346373055313253",
+      "actions":[]
+    }
+  ]
+}
