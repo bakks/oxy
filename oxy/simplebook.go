@@ -1,5 +1,6 @@
 package oxy
 
+import "fmt"
 import "errors"
 
 type SimpleBook struct {
@@ -64,12 +65,18 @@ func (x *SimpleBook) AsksLength() int {
   return len(x.asks)
 }
 
-func (x *SimpleBook) GetBid(i int) Quote {
-  return x.bids[i]
+func (x *SimpleBook) GetBid(i int) (Quote, error) {
+  if i >= len(x.bids) {
+    return EmptyQuote(), errors.New("Invalid bid")
+  }
+  return x.bids[i], nil
 }
 
-func (x *SimpleBook) GetAsk(i int) Quote {
-  return x.asks[i]
+func (x *SimpleBook) GetAsk(i int) (Quote, error) {
+  if i >= len(x.asks) {
+    return EmptyQuote(), errors.New("Invalid ask")
+  }
+  return x.asks[i], nil
 }
 
 func (x *SimpleBook) Bid() (Quote, error) {
@@ -87,4 +94,18 @@ func (x *SimpleBook) Ask() (Quote, error) {
 
   return x.asks[0], nil
 }
+
+func (x *SimpleBook) Print() {
+  fmt.Println("--- book -------------------")
+
+  for i := len(x.asks) - 1; i >= 0; i-- {
+    fmt.Printf("ask\t%'4d\t%'4d\n", x.asks[i].Price, x.asks[i].Size)
+  }
+
+  for i := 0; i < len(x.bids); i++ {
+    fmt.Printf("bid\t%'4d\t%'4d\n", x.bids[i].Price, x.bids[i].Size)
+  }
+  fmt.Println("----------------------------")
+}
+
 

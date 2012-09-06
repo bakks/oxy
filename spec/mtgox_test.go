@@ -34,6 +34,10 @@ func TestFetchOrders(t *testing.T) {
   if bid.Start.Unix() != 1346373055 {
     t.Error("incorrect order timestamp " + strconv.Itoa(int(bid.Start.Unix())))
   }
+
+  if bid.ExtId != "f4a11c80-a27e-40a7-9913-2706f79ef1f6" {
+    t.Error("incorrect external id: " + bid.ExtId)
+  }
 }
 
 func ftoa(x float64) string {

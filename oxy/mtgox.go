@@ -84,8 +84,47 @@ func (x *MtGox) GetResponses() {
   x.request(MTGOX_ORDERS, nil)
 }
 
-func (x *MtGox) GetOrders() SimpleBook {
-  return x.orders
+func (x *MtGox) AddOrder(isBuy bool, price, size float64) error {
+  side := "bid"
+
+  if !isBuy {
+    side = "ask"
+  }
+
+  fmt.Printf("AddOrder %s %f %f\n", side, price, size)
+
+  var order = map[string]interface{} {
+    "type" : side,
+    "amount_int" : strconv.FormatFloat(size * 1000000, 'f', 7, 64),
+    "price_int" : strconv.FormatFloat(price * 1000000, 'f', 7, 64),
+  }
+
+  x.request(MTGOX_TRADE, order)
+  return nil
+}
+
+func (x *MtGox) CancelOrder(id string) error {
+  fmt.Printf("CancelOrder %s\n", id)
+
+  var args = map[string]interface{} {
+    "oid" : id,
+    "token" : MTGOX_TOKEN,
+  }
+
+  strargs := urlEncode(args)
+  req, _ := http.NewRequest("POST", x.domain + MTGOX_CANCEL, strings.NewReader(strargs))
+  body, err := x.client.Do(req)
+
+  if err != nil {
+    return err
+  }
+
+  fmt.Println("cancel: " + body)
+  return nil
+}
+
+func (x *MtGox) GetOrders() *SimpleBook {
+  return &x.orders
 }
 
 func (x *MtGox) GetDepth() *SimpleBook {
@@ -124,7 +163,13 @@ func (x *MtGox) GetMidpoint() float64 {
 }
 
 func (x *MtGox) FetchOrders() error {
-  r := x.request(MTGOX_ORDERS, nil).([]interface{})
+  body, err := x.request(MTGOX_ORDERS, nil)
+
+  if err != nil {
+    return err
+  }
+
+  r := body.([]interface{})
   x.orders.Clear()
 
   for _, o := range r {
@@ -145,9 +190,11 @@ func (x *MtGox) FetchOrders() error {
 
     orderType := order["type"].(string)
     timestamp := time.Unix(int64(order["date"].(float64)), 0).UTC()
+    id := order["oid"].(string)
 
     q := NewQuote(price, size, (orderType == "bid"))
     q.Start = timestamp
+    q.ExtId = id
     x.orders.Add(q)
   }
 
@@ -155,7 +202,12 @@ func (x *MtGox) FetchOrders() error {
 }
 
 func (x *MtGox) FetchTrades() error {
-  r := x.request(MTGOX_TRADES, nil).([]interface{})
+  body, err := x.request(MTGOX_TRADES, nil)
+  if err != nil {
+    return err
+  }
+
+  r := body.([]interface{})
   x.trades = x.trades[:0]
 
   for _, t := range r {
@@ -198,7 +250,12 @@ func (x *MtGox) FetchTrades() error {
 }
 
 func (x *MtGox) FetchAccounts() error {
-  r := x.request(MTGOX_INFO, nil).(map[string]interface{})
+  body, err := x.request(MTGOX_INFO, nil)
+  if err != nil {
+    return err
+  }
+
+  r := body.(map[string]interface{})
 
   x.fee = r["Trade_Fee"].(float64)
 
@@ -226,7 +283,12 @@ func (x *MtGox) FetchAccounts() error {
 }
 
 func (x *MtGox) FetchDepth() error {
-  r := x.request(MTGOX_FULLDEPTH, nil).(map[string]interface{})
+  body, err := x.request(MTGOX_FULLDEPTH, nil)
+  if err != nil {
+    return err
+  }
+
+  r := body.(map[string]interface{})
   x.depth.Clear()
 
   bids := r["bids"].([]interface{})
@@ -277,7 +339,7 @@ func urlEncode(args map[string]interface{}) string {
       case string:
         strval = t
       default:
-        fmt.Printf("Could not recognize type %T for key %s", k, t)
+        fmt.Printf("Could not recognize type %T for key %s\n", k, t)
     }
 
     values.Add(k, strval)
@@ -286,7 +348,7 @@ func urlEncode(args map[string]interface{}) string {
   return values.Encode()
 }
 
-func (x *MtGox) request(path string, args map[string]interface{}) interface{} {
+func (x *MtGox) request(path string, args map[string]interface{}) (interface{}, error) {
   if args == nil {
     args = make(map[string]interface{})
   }
@@ -308,7 +370,7 @@ func (x *MtGox) request(path string, args map[string]interface{}) interface{} {
   body, err := x.client.Do(req)
 
   if err != nil {
-    return nil
+    return nil, err
   }
 
   var v map[string]interface{}
@@ -316,22 +378,24 @@ func (x *MtGox) request(path string, args map[string]interface{}) interface{} {
 
   if err != nil {
     fmt.Println(err)
+    return nil, err
   }
 
   if v == nil {
     fmt.Println("Returned JSON unmarshaled to nil")
+    return nil, err
   }
 
   if v["result"] != nil && v["result"] != "success" {
     fmt.Println("result not success: " + v["result"].(string))
-    return nil
+    return nil, errors.New("MtGox did not return success")
   }
 
   if v["return"] != nil {
-    return v["return"].(interface{})
+    return v["return"].(interface{}), nil
   } else {
-    return v
+    return v, nil
   }
 
-  return nil
+  return nil, errors.New("unreachable statement")
 }

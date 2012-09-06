@@ -33,6 +33,7 @@ type Exchange interface {
   FetchAccounts() error
   FetchTrades() error
   GetDepth() *SimpleBook
+  GetOrders() *SimpleBook
   GetTrades() []Trade
   GetFee() float64
   GetBalance(Currency) float64
@@ -59,6 +60,7 @@ type Quote struct {
   Currency  Currency
   Start     time.Time
   End       time.Time
+  ExtId     string
 }
 
 func NewQuote(price, size float64, isBuy bool) Quote {
