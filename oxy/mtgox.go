@@ -15,12 +15,14 @@ import "encoding/base64"
 
 const MTGOX_KEY string        = "7d71c7f4-7ff3-454e-87a5-6851a4962edf"
 const MTGOX_SECRET string     = "KjUXf1eyq/JgX3+LFVm4BzrpQIeqx02YI9LveEzfIO37PQ8Dy8fIFlO8s84eARM9LvVE/ujesyJf41j0y6fcGg=="
+const MTGOX_TOKEN string      = "7W2JJFDUEL47VDCVTSKC2TPGJV222EVX"
 
 const MTGOX_DOMAIN string     = "https://mtgox.com"
 const MTGOX_FULLDEPTH string  = "/api/1/BTCUSD/fulldepth"
 const MTGOX_TRADES string     = "/api/1/BTCUSD/trades"
 const MTGOX_TICKER string     = "/api/1/BTCUSD/ticker"
 const MTGOX_TRADE string      = "/api/1/BTCUSD/private/order/add"
+const MTGOX_CANCEL string     = "/code/cancelOrder.php"
 const MTGOX_INFO string       = "/api/1/generic/private/info"
 const MTGOX_ORDERS string     = "/api/1/generic/private/orders"
 
@@ -86,8 +88,8 @@ func (x *MtGox) GetOrders() SimpleBook {
   return x.orders
 }
 
-func (x *MtGox) GetDepth() SimpleBook {
-  return x.depth
+func (x *MtGox) GetDepth() *SimpleBook {
+  return &x.depth
 }
 
 func (x *MtGox) GetTrades() []Trade {
@@ -233,18 +235,26 @@ func (x *MtGox) FetchDepth() error {
   for _, b := range bids {
     bid := b.(map[string]interface{})
     q := NewQuote(bid["price"].(float64), bid["amount"].(float64), true)
-    t,_ := strconv.ParseInt(bid["stamp"].(string), 10, 64)
+    t, err := strconv.ParseInt(bid["stamp"].(string), 10, 64)
 
-    q.Start = time.Unix(t / 1000000, t - (t / 1000000)).UTC()
+    if err != nil {
+      return err
+    }
+
+    q.Start = time.Unix(t / 1000000, t - (t / 1000000) * 1000000).UTC()
     x.depth.Add(q)
   }
 
   for _, a := range asks {
     ask := a.(map[string]interface{})
     q := NewQuote(ask["price"].(float64), ask["amount"].(float64), false)
-    t,_ := strconv.ParseInt(ask["stamp"].(string), 10, 64)
+    t, err := strconv.ParseInt(ask["stamp"].(string), 10, 64)
 
-    q.Start = time.Unix(t / 1000000, t - (t / 1000000)).UTC()
+    if err != nil {
+      return err
+    }
+
+    q.Start = time.Unix(t / 1000000, t - (t / 1000000) * 1000000).UTC()
     x.depth.Add(q)
   }
 

@@ -32,7 +32,7 @@ type Exchange interface {
   FetchOrders() error
   FetchAccounts() error
   FetchTrades() error
-  GetDepth() SimpleBook
+  GetDepth() *SimpleBook
   GetTrades() []Trade
   GetFee() float64
   GetBalance(Currency) float64

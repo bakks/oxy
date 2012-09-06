@@ -1,5 +1,6 @@
 package oxy
 
+import "fmt"
 import "testing"
 import "strconv"
 import "time"
@@ -44,6 +45,40 @@ func iso8601(x string) time.Time {
   return str
 }
 
+func VerifyTrades(trades []oxy.Trade, t *testing.T) {
+  bids := 0
+  asks := 0
+
+  for _, trade := range trades {
+    if trade.Price < 0.001 || trade.Price > 99999 {
+      t.Error("extreme price: " + ftoa(trade.Price))
+    }
+
+    if trade.Size < 0.0000001 || trade.Size > 99999 {
+      t.Error("extreme size: " + ftoa(trade.Size))
+    }
+
+    if trade.Currency != oxy.USD {
+      t.Error("weird currency: " + oxy.CurrencyString(trade.Currency))
+    }
+
+    if trade.IsBuy {
+      bids++
+    } else {
+      asks++
+    }
+
+    if trade.Timestamp.Unix() < iso8601("2012-01-01T00:00:00Z").Unix() ||
+       trade.Timestamp.Unix() > time.Now().Unix() {
+      t.Error("extreme timestamp: " + trade.Timestamp.Format(time.RFC3339))
+    }
+  }
+
+  if bids < 200 || asks < 200 {
+    t.Error("unbalanced bids and asks: bids " + strconv.Itoa(bids) + " asks " + strconv.Itoa(asks))
+  }
+}
+
 func TestFetchTrades(t *testing.T) {
   mtgox.SetHTTPClient(NewTestHTTPClient())
   mtgox.FetchTrades()
@@ -53,9 +88,6 @@ func TestFetchTrades(t *testing.T) {
     t.Error("did not fetch enough trades")
   }
 
-  bids := 0
-  asks := 0
-  
   trade := trades[0]
 
   if trade.Price != 10.8999 {
@@ -78,43 +110,142 @@ func TestFetchTrades(t *testing.T) {
     t.Error("did not parse timestamp correctly")
   }
 
-  for _, trade := range trades {
-    if trade.Price < 0.001 || trade.Price > 99999 {
-      t.Error("extreme price: " + ftoa(trade.Price))
-    }
+  VerifyTrades(trades, t)
+}
 
-    if trade.Size < 0.001 || trade.Size > 99999 {
-      t.Error("extreme size: " + ftoa(trade.Price))
-    }
-
-    if trade.Currency != oxy.USD {
-      t.Error("weird currency: " + oxy.CurrencyString(trade.Currency))
-    }
-
-    if trade.IsBuy {
-      bids++
-    } else {
-      asks++
-    }
-
-    if trade.Timestamp.Unix() < iso8601("2012-01-01T00:00:00Z").Unix() ||
-       trade.Timestamp.Unix() > iso8601("2015-01-01T00:00:00Z").Unix() {
-      t.Error("extreme timestamp: " + trade.Timestamp.Format(time.RFC3339))
-    }
+func VerifyAccounts(mtgox *oxy.MtGox, t *testing.T) {
+  fee := mtgox.GetFee()
+  if fee <= 0 || fee >= 1 {
+    t.Error("extreme fee value: " + ftoa(fee))
   }
 
-  if bids < 200 || asks < 200 {
-    t.Error("unbalanced bids and asks: bids " + strconv.Itoa(bids) + " asks " + strconv.Itoa(asks))
+  usd := mtgox.GetBalance(oxy.USD)
+  if usd <= 0 || usd > 5000 {
+    t.Error("extreme USD balance: " + ftoa(usd))
+  }
+
+  btc := mtgox.GetBalance(oxy.BTC)
+  if btc <= 0 || btc > 1000 {
+    t.Error("extreme BTC balance: " + ftoa(btc))
   }
 }
 
 func TestFetchAccounts(t *testing.T) {
   mtgox.SetHTTPClient(NewTestHTTPClient())
   mtgox.FetchAccounts()
+
+  if mtgox.GetFee() != 0.6 {
+    t.Error("incorrect fee value: " + ftoa(mtgox.GetFee()))
+  }
+
+  if mtgox.GetBalance(oxy.USD) != 22.01601 {
+    t.Error("incorrect USD balance: " + ftoa(mtgox.GetBalance(oxy.USD)))
+  }
+
+  if mtgox.GetBalance(oxy.BTC) != 25.035 {
+    t.Error("incorrect BTC balance: " + ftoa(mtgox.GetBalance(oxy.BTC)))
+  }
+
+  VerifyAccounts(mtgox, t)
+}
+
+func VerifyQuote(quote oxy.Quote, isBuy bool, t *testing.T) {
+  if quote.Price < 0.00001 || quote.Price > 10000000 {
+    fmt.Println("extreme price: " + ftoa(quote.Price))
+  }
+
+  if quote.Size < 0.00001 || quote.Size > 100000 {
+    fmt.Println("extreme size: " + ftoa(quote.Size))
+  }
+
+  if quote.IsBuy != isBuy {
+    t.Error("incorrect side")
+  }
+
+  if quote.Currency != oxy.USD {
+    t.Error("weird currency: " + oxy.CurrencyString(quote.Currency))
+  }
+
+  if quote.Start.Unix() < iso8601("2011-01-01T00:00:00Z").Unix() ||
+     quote.Start.Unix() > time.Now().Unix() {
+    t.Error("extreme timestamp: " + quote.Start.Format(time.RFC3339))
+  }
+}
+
+func VerifyDepth(book *oxy.SimpleBook, t *testing.T) {
+  if book.GetBid(0).Price > book.GetAsk(0).Price {
+    t.Error("crossed book")
+  }
+
+  if book.GetBid(0).Price + 2 < book.GetAsk(0).Price {
+    t.Error("wide spread")
+  }
+
+  if book.BidsLength() < 500 {
+    t.Error("book has few bids: " + strconv.Itoa(book.BidsLength()))
+  }
+
+  if book.AsksLength() < 500 {
+    t.Error("book has few asks: " + strconv.Itoa(book.AsksLength()))
+  }
+
+  for i := 0; i < book.BidsLength(); i++ {
+    VerifyQuote(book.GetBid(i), true, t)
+  }
+
+  for i := 0; i < book.AsksLength(); i++ {
+    VerifyQuote(book.GetAsk(i), false, t)
+  }
 }
 
 func TestFetchDepth(t *testing.T) {
   mtgox.SetHTTPClient(NewTestHTTPClient())
   mtgox.FetchDepth()
+
+  VerifyDepth(mtgox.GetDepth(), t)
+
+  bid := mtgox.GetDepth().GetBid(0)
+  ask := mtgox.GetDepth().GetAsk(0)
+
+  if bid.Price != 10.7931 {
+    t.Error("incorrect bid price: " + ftoa(bid.Price))
+  }
+
+  if bid.Size != 14.08249999 {
+    t.Error("incorrect bid size: " + ftoa(bid.Size))
+  }
+
+  if !bid.IsBuy {
+    t.Error("incorrect bid side")
+  }
+
+  if bid.Currency != oxy.USD {
+    t.Error("incorrect bid currency")
+  }
+
+  if bid.Start.Unix() != 1344229187 {
+    t.Error("incorrect start time: " + strconv.Itoa(int(bid.Start.Unix())))
+  }
+
+  if ask.Price != 10.8699 {
+    t.Error("incorrect ask price: " + ftoa(bid.Price))
+  }
+
+  if ask.Size != 2.99 {
+    t.Error("incorrect ask size: " + ftoa(bid.Size))
+  }
+
+  if ask.IsBuy {
+    t.Error("incorrect ask side")
+  }
+
+  if ask.Currency != oxy.USD {
+    t.Error("incorrect ask currency")
+  }
+
+  if ask.Start.Unix() != 1344229184 {
+    t.Error("incorrect start time: " + strconv.Itoa(int(ask.Start.Unix())))
+  }
+
 }
 
