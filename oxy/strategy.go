@@ -2,7 +2,7 @@ package oxy
 
 func Run() {
   var exch *MtGox = NewMtGox()
-  exch.AddOrder(true, 0.000001, 0.000001)
+  exch.AddOrder(true, 1, 1)
   exch.FetchOrders()
   exch.GetOrders().Print()
   order, err := exch.GetOrders().Bid()

@@ -99,11 +99,11 @@ func (x *SimpleBook) Print() {
   fmt.Println("--- book -------------------")
 
   for i := len(x.asks) - 1; i >= 0; i-- {
-    fmt.Printf("ask\t%'4d\t%'4d\n", x.asks[i].Price, x.asks[i].Size)
+    fmt.Printf("ask\t%f\t%f\n", x.asks[i].Price, x.asks[i].Size)
   }
 
   for i := 0; i < len(x.bids); i++ {
-    fmt.Printf("bid\t%'4d\t%'4d\n", x.bids[i].Price, x.bids[i].Size)
+    fmt.Printf("bid\t%f\t%f\n", x.bids[i].Price, x.bids[i].Size)
   }
   fmt.Println("----------------------------")
 }

@@ -15,7 +15,7 @@ import "encoding/base64"
 
 const MTGOX_KEY string        = "7d71c7f4-7ff3-454e-87a5-6851a4962edf"
 const MTGOX_SECRET string     = "KjUXf1eyq/JgX3+LFVm4BzrpQIeqx02YI9LveEzfIO37PQ8Dy8fIFlO8s84eARM9LvVE/ujesyJf41j0y6fcGg=="
-const MTGOX_TOKEN string      = "7W2JJFDUEL47VDCVTSKC2TPGJV222EVX"
+const MTGOX_TOKEN string      = "E5KGRCXMEX7UXUEAEWZBH6K7V94B2M2H"
 
 const MTGOX_DOMAIN string     = "https://mtgox.com"
 const MTGOX_FULLDEPTH string  = "/api/1/BTCUSD/fulldepth"
@@ -95,8 +95,8 @@ func (x *MtGox) AddOrder(isBuy bool, price, size float64) error {
 
   var order = map[string]interface{} {
     "type" : side,
-    "amount_int" : strconv.FormatFloat(size * 1000000, 'f', 7, 64),
-    "price_int" : strconv.FormatFloat(price * 1000000, 'f', 7, 64),
+    "amount_int" : strconv.FormatFloat(size * 100000000, 'f', 7, 64),
+    "price_int" : strconv.FormatFloat(price * 100000, 'f', 7, 64),
   }
 
   x.request(MTGOX_TRADE, order)
@@ -104,15 +104,17 @@ func (x *MtGox) AddOrder(isBuy bool, price, size float64) error {
 }
 
 func (x *MtGox) CancelOrder(id string) error {
-  fmt.Printf("CancelOrder %s\n", id)
-
   var args = map[string]interface{} {
     "oid" : id,
-    "token" : MTGOX_TOKEN,
   }
 
   strargs := urlEncode(args)
-  req, _ := http.NewRequest("POST", x.domain + MTGOX_CANCEL, strings.NewReader(strargs))
+  req, err := http.NewRequest("POST", "http://0.0.0.0:14555/cancel", strings.NewReader(strargs))
+
+  if err != nil {
+    return nil
+  }
+
   body, err := x.client.Do(req)
 
   if err != nil {
