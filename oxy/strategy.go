@@ -11,6 +11,6 @@ func Run() {
     return
   }
 
-  exch.CancelOrder(order.ExtId)
+  exch.CancelOrder(order)
 }
 

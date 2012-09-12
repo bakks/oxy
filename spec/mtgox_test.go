@@ -17,7 +17,7 @@ func TestFetchOrders(t *testing.T) {
     t.Error("did not fetch correct number of orders")
   }
 
-  bid := orders.GetBid(0)
+  bid, _ := orders.GetBid(0)
 
   if bid.Price != 0.00001 {
     t.Error("did not parse order price correctly")
@@ -177,11 +177,14 @@ func VerifyQuote(quote oxy.Quote, isBuy bool, t *testing.T) {
 }
 
 func VerifyDepth(book *oxy.SimpleBook, t *testing.T) {
-  if book.GetBid(0).Price > book.GetAsk(0).Price {
+  bid, _ := book.Bid()
+  ask, _ := book.Ask()
+
+  if bid.Price > ask.Price {
     t.Error("crossed book")
   }
 
-  if book.GetBid(0).Price + 2 < book.GetAsk(0).Price {
+  if bid.Price + 2 < ask.Price {
     t.Error("wide spread")
   }
 
@@ -194,11 +197,13 @@ func VerifyDepth(book *oxy.SimpleBook, t *testing.T) {
   }
 
   for i := 0; i < book.BidsLength(); i++ {
-    VerifyQuote(book.GetBid(i), true, t)
+    bid, _ := book.GetBid(i)
+    VerifyQuote(bid, true, t)
   }
 
   for i := 0; i < book.AsksLength(); i++ {
-    VerifyQuote(book.GetAsk(i), false, t)
+    ask, _ := book.GetAsk(i)
+    VerifyQuote(ask, false, t)
   }
 }
 
@@ -208,8 +213,8 @@ func TestFetchDepth(t *testing.T) {
 
   VerifyDepth(mtgox.GetDepth(), t)
 
-  bid := mtgox.GetDepth().GetBid(0)
-  ask := mtgox.GetDepth().GetAsk(0)
+  bid, _ := mtgox.GetDepth().GetBid(0)
+  ask, _ := mtgox.GetDepth().GetAsk(0)
 
   if bid.Price != 10.7931 {
     t.Error("incorrect bid price: " + ftoa(bid.Price))

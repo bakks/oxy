@@ -52,6 +52,12 @@ func NewMtGox() *MtGox {
   x.fee = -1
   x.balance = make(map[Currency]float64)
 
+  resp, err := http.Get("http://0.0.0.0:14555/")
+
+  if err != nil || resp.StatusCode != 200 {
+    panic("could not reach local cancel server")
+  }
+
   return &x
 }
 
@@ -103,9 +109,27 @@ func (x *MtGox) AddOrder(isBuy bool, price, size float64) error {
   return nil
 }
 
-func (x *MtGox) CancelOrder(id string) error {
+func (x *MtGox) CancelAll() error {
+  for i := 0; i < x.orders.BidsLength(); i++ {
+    bid, err := x.orders.GetBid(i)
+    if err != nil { return err }
+    err = x.CancelOrder(bid)
+    if err != nil { return err }
+  }
+
+  for i := 0; i < x.orders.AsksLength(); i++ {
+    ask, err := x.orders.GetAsk(i)
+    if err != nil { return err }
+    err = x.CancelOrder(ask)
+    if err != nil { return err }
+  }
+
+  return nil
+}
+
+func (x *MtGox) CancelOrder(order Quote) error {
   var args = map[string]interface{} {
-    "oid" : id,
+    "oid" : order.ExtId,
   }
 
   strargs := urlEncode(args)
@@ -115,13 +139,12 @@ func (x *MtGox) CancelOrder(id string) error {
     return nil
   }
 
-  body, err := x.client.Do(req)
+  _, err = x.client.Do(req)
 
   if err != nil {
     return err
   }
 
-  fmt.Println("cancel: " + body)
   return nil
 }
 

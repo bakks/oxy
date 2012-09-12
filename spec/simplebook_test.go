@@ -4,7 +4,35 @@ import "testing"
 import "../oxy"
 
 func TestNewSimpleBook(t *testing.T) {
-  oxy.NewSimpleBook()
+  x := oxy.NewSimpleBook()
+
+  if x.BidsLength() != 0 || x.AsksLength() != 0 {
+    t.Error("did not init to empty")
+  }
+
+  _, err := x.Bid()
+
+  if err == nil {
+    t.Error("should have gotten error")
+  }
+
+  _, err = x.GetBid(0)
+
+  if err == nil {
+    t.Error("should have gotten error")
+  }
+
+  _, err = x.Ask()
+
+  if err == nil {
+    t.Error("should have gotten error")
+  }
+
+  _, err = x.GetAsk(0)
+
+  if err == nil {
+    t.Error("should have gotten error")
+  }
 }
 
 func TestSimpleBookBids(t *testing.T) {
@@ -25,11 +53,17 @@ func TestSimpleBookBids(t *testing.T) {
   var last float64 = 6
 
   for i := 0; i < book.BidsLength(); i++ {
-    if int(book.GetBid(i).Price) != int(last - 1) {
+    bid, err := book.GetBid(i)
+
+    if err != nil {
+      t.Error("unexpected error", err)
+    }
+
+    if int(bid.Price) != int(last - 1) {
       t.Error("broken book")
     }
 
-    last = book.GetBid(i).Price
+    last = bid.Price
   }
 }
 
@@ -51,10 +85,16 @@ func TestSimpleBookAsks(t *testing.T) {
   var last float64 = 0
 
   for i := 0; i < book.AsksLength(); i++ {
-    if int(book.GetAsk(i).Price) != int(last + 1) {
+    ask, err := book.GetAsk(i)
+
+    if err != nil {
+      t.Error("unexpected error", err)
+    }
+
+    if int(ask.Price) != int(last + 1) {
       t.Error("broken book")
     }
 
-    last = book.GetAsk(i).Price
+    last = ask.Price
   }
 }

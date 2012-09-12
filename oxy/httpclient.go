@@ -29,7 +29,7 @@ func (x *OxyHTTPClient) Do(req *http.Request) (string, error) {
     return "", err
   }
 
-  fmt.Println(string(body))
+  //fmt.Println(string(body))
 
   return string(body), nil
 }

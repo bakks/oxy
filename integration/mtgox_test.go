@@ -39,7 +39,7 @@ func TestFetchDepth(t *testing.T) {
     t.Error("could not fetch depth")
   }
 
-  book := x.Depth()
+  book := x.GetDepth()
 
   if book.BidsLength() < 1 || book.BidsLength() > 99999 {
     t.Error("bad number of bids: " + strconv.Itoa(book.BidsLength()))
@@ -47,6 +47,61 @@ func TestFetchDepth(t *testing.T) {
 
   if book.AsksLength() < 1 || book.AsksLength() > 99999 {
     t.Error("bad number of asks: " + strconv.Itoa(book.AsksLength()))
+  }
+}
+
+func TestAddCancel(t *testing.T) {
+  x := oxy.NewMtGox()
+
+  err := x.FetchOrders()
+  if err != nil { t.Error("couldn't fetch orders", err) }
+  err = x.CancelAll()
+  if err != nil { t.Error("couldn't cancel orders", err) }
+  err = x.FetchOrders()
+  if err != nil { t.Error("couldn't fetch orders", err) }
+
+  if x.GetOrders().BidsLength() != 0 || x.GetOrders().BidsLength() != 0 {
+    t.Error("did not cancel all orders")
+  }
+
+  BID_PRICE := 0.1
+  ASK_PRICE := 999999999.0
+
+  err = x.AddOrder(true, BID_PRICE, 0.1)
+  if err != nil { t.Error("couldn't add order", err) }
+  err = x.AddOrder(false, ASK_PRICE, 0.1)
+  if err != nil { t.Error("couldn't add order", err) }
+
+  err = x.FetchOrders()
+  if err != nil { t.Error("couldn't fetch orders", err) }
+
+  if x.GetOrders().BidsLength() != 1 {
+    t.Error("did not add bid")
+  }
+
+  if x.GetOrders().AsksLength() != 1 {
+    t.Error("did not add ask")
+  }
+
+  bid, _ := x.GetOrders().Bid()
+
+  if bid.Price != BID_PRICE || bid.Size != 0.1 {
+    t.Error("incorrect bid added")
+  }
+
+  ask, _ := x.GetOrders().Ask()
+
+  if ask.Price != ASK_PRICE || ask.Size != 0.1 {
+    t.Error("incorrect ask added")
+  }
+
+  err = x.CancelAll()
+  if err != nil { t.Error("couldn't cancel orders", err) }
+  err = x.FetchOrders()
+  if err != nil { t.Error("couldn't fetch orders", err) }
+
+  if x.GetOrders().BidsLength() != 0 || x.GetOrders().BidsLength() != 0 {
+    t.Error("did not cancel all orders")
   }
 }
 
