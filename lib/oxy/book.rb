@@ -1,9 +1,8 @@
 class Book
-  @bids = []
-  @asks = []
 
   def initialize
-
+    @bids = []
+    @asks = []
   end
 
   def clear
@@ -12,10 +11,11 @@ class Book
   end
 
   def add(quote)
-    raise 'must be Quote' unless quote === Quote
+    raise 'nil quote' unless quote
+    raise 'must be Quote' unless quote.is_a? Quote
 
     if quote.isBuy
-      for i in 0..@bids.size
+      for i in 0..(@bids.size - 1)
         if quote.price > @bids[i].price
           @bids.insert(i, quote)
           return
@@ -23,7 +23,7 @@ class Book
       end
       @bids << quote
     else
-      for i in 0..@asks.size
+      for i in 0..(@asks.size - 1)
         if quote.price < @asks[i].price
           @asks.insert(i, quote)
           return
@@ -34,11 +34,11 @@ class Book
   end
 
   def bids
-    @bids.size
+    @bids
   end
 
   def asks
-    @asks.size
+    @asks
   end
 
   def bid i
@@ -50,7 +50,7 @@ class Book
   end
 
   def remove quote
-    raise 'must be Quote' unless quote === Quote
+    raise 'must be Quote' unless quote.is_a? Quote
 
     if quote.isBuy
       @bids.delete_if { |x| x.equals(quote) }

@@ -9,7 +9,7 @@ class Quote
   end
 
   def equals o
-    @isBuy == o.isBuy and @price == o.price and @size == o.size and @start == o.start and @end == o.end and @extId == extId
+    @isBuy == o.isBuy and @price == o.price and @size == o.size and @start == o.start and @finish == o.finish and @extId == extId
   end
 
   def isBuy
@@ -22,5 +22,17 @@ class Quote
 
   def size
     @size
+  end
+
+  def start
+    @start
+  end
+
+  def finish
+    @finish
+  end
+
+  def extId
+    @extId
   end
 end
