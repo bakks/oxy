@@ -49,5 +49,28 @@ class Book
     @asks[i]
   end
 
+  def remove quote
+    raise 'must be Quote' unless quote === Quote
 
+    if quote.isBuy
+      @bids.delete_if { |x| x.equals(quote) }
+    else
+      @asks.delete_if { |x| x.equals(quote) }
+    end
+  end
+
+  def removeBid i
+    @bids.delete_at i
+  end
+
+  def removeAsk i
+    @asks.delete_at i
+  end
+
+  def print
+    puts "-- book -------------------------"
+    @asks.reverse.each { |x| puts "ask\t" + x.price + "\t" + x.size }
+    @bids.each { |x| puts "bid\t" + x.price + "\t" + x.size }
+    puts "---------------------------------"
+  end
 end
