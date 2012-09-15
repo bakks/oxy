@@ -46,6 +46,7 @@ func NewMtGox() *MtGox {
   log.Println("creating new MtGox instance")
 
   var x MtGox
+  x.log = 
   x.client = NewOxyHTTPClient()
   x.domain = MTGOX_DOMAIN
   x.key = MTGOX_KEY
