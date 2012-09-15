@@ -5,6 +5,8 @@ import "errors"
 import "strconv"
 import "net/http"
 
+
+
 type Currency int32
 const BTC Currency = 0
 const USD Currency = 1

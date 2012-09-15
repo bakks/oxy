@@ -1,6 +1,7 @@
 package oxy
 
 import "fmt"
+import "log"
 import "errors"
 import "strconv"
 import "strings"
@@ -38,9 +39,12 @@ type MtGox struct {
   trades      []Trade
   fee         float64
   balance     map[Currency]float64
+  log         log.Logger
 }
 
 func NewMtGox() *MtGox {
+  log.Println("creating new MtGox instance")
+
   var x MtGox
   x.client = NewOxyHTTPClient()
   x.domain = MTGOX_DOMAIN
@@ -51,11 +55,13 @@ func NewMtGox() *MtGox {
   x.fee = -1
   x.balance = make(map[Currency]float64)
 
-  /*resp, err := http.Get("http://0.0.0.0:14555/")
+  resp, err := http.Get("http://0.0.0.0:14555/")
 
   if err != nil || resp.StatusCode != 200 {
-    panic("could not reach local cancel server")
-  }*/
+    log.Panic("could not reach local cancel server")
+  }
+
+  log.Println("created new MtGox instance")
 
   return &x
 }
@@ -92,6 +98,8 @@ func (x *MtGox) GetResponses() {
 func (x *MtGox) SetOrders(
     newBook *SimpleBook,
     priceThreshold float64) error {
+  log.Printf("set order book at MtGox: %i bids %i asks\n", newBook.BidsLength(), newBook.AsksLength())
+
   var orders SimpleBook = x.orders
   oldBook := orders
   j := 0
