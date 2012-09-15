@@ -95,6 +95,52 @@ func (x *SimpleBook) Ask() (Quote, error) {
   return x.asks[0], nil
 }
 
+func (x *SimpleBook) Remove(q Quote) bool {
+  if q.IsBuy {
+    for i, a := range x.bids {
+      if a.Equals(q) {
+        x.RemoveBid(i)
+        return true
+      }
+    }
+  } else {
+    for i, a := range x.asks {
+      if a.Equals(q) {
+        x.RemoveAsk(i)
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
+func (x *SimpleBook) RemoveBid(i int) {
+  if i >= len(x.bids) {
+    fmt.Println("Attempting to remove bid that does not exist")
+    return
+  }
+
+  x.bids = x.removeElement(x.bids, i)
+}
+
+func (x *SimpleBook) RemoveAsk(i int) {
+  if i >= len(x.asks) {
+    fmt.Println("Attempting to remove ask that does not exist")
+    return
+  }
+
+  x.asks = x.removeElement(x.asks, i)
+}
+
+func (x *SimpleBook) removeElement(arr []Quote, element int) []Quote {
+  for i := element; i < len(arr) - 1; i++ {
+    arr[i] = arr[i + 1]
+  }
+
+  return arr[0:len(arr) - 1]
+}
+
 func (x *SimpleBook) Print() {
   fmt.Println("--- book -------------------")
 
@@ -107,5 +153,4 @@ func (x *SimpleBook) Print() {
   }
   fmt.Println("----------------------------")
 }
-
 

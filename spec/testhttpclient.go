@@ -18,6 +18,7 @@ var mockedEndpoints = map[string]string {
     "https://mtgox.com/api/1/BTCUSD/fulldepth": "mtgox/fulldepth.json",
     "https://mtgox.com/api/1/BTCUSD/trades": "mtgox/trades.json",
     "https://mtgox.com/api/1/BTCUSD/ticker": "mtgox/ticker.json",
+    "http://0.0.0.0:14555/cancel": "cancel.json",
 }
 
 func (x *TestHTTPClient) Do(req *http.Request) (string, error) {

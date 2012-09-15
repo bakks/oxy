@@ -138,7 +138,7 @@ func TestFetchAccounts(t *testing.T) {
   mtgox.SetHTTPClient(NewTestHTTPClient())
   mtgox.FetchAccounts()
 
-  if mtgox.GetFee() != 0.6 {
+  if mtgox.GetFee() != 0.006 {
     t.Error("incorrect fee value: " + ftoa(mtgox.GetFee()))
   }
 

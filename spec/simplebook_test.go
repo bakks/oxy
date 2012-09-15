@@ -98,3 +98,43 @@ func TestSimpleBookAsks(t *testing.T) {
     last = ask.Price
   }
 }
+
+func TestSimpleBookRemoves(t *testing.T) {
+  q1 := oxy.NewQuote(5, 1, true)
+  q2 := oxy.NewQuote(4, 1, true)
+  q3 := oxy.NewQuote(3, 1, true)
+  q4 := oxy.NewQuote(2, 1, true)
+  q5 := oxy.NewQuote(1, 1, true)
+
+  book := oxy.NewSimpleBook()
+
+  book.Add(q2)
+  book.Add(q5)
+  book.Add(q1)
+  book.Add(q3)
+  book.Add(q4)
+
+  result := book.Remove(q2)
+
+  if !result {
+    t.Error("remove failed")
+  }
+
+  bid, _ := book.GetBid(0)
+
+  if !bid.Equals(q1) {
+    t.Error("remove failed")
+  }
+
+  bid, _ = book.GetBid(1)
+
+  if !bid.Equals(q3) {
+    t.Error("remove failed")
+  }
+
+  result = book.Remove(q2)
+
+  if result {
+    t.Error("empty remove was successful")
+  }
+}

@@ -15,7 +15,6 @@ import "encoding/base64"
 
 const MTGOX_KEY string        = "7d71c7f4-7ff3-454e-87a5-6851a4962edf"
 const MTGOX_SECRET string     = "KjUXf1eyq/JgX3+LFVm4BzrpQIeqx02YI9LveEzfIO37PQ8Dy8fIFlO8s84eARM9LvVE/ujesyJf41j0y6fcGg=="
-const MTGOX_TOKEN string      = "E5KGRCXMEX7UXUEAEWZBH6K7V94B2M2H"
 
 const MTGOX_DOMAIN string     = "https://mtgox.com"
 const MTGOX_FULLDEPTH string  = "/api/1/BTCUSD/fulldepth"
@@ -52,11 +51,11 @@ func NewMtGox() *MtGox {
   x.fee = -1
   x.balance = make(map[Currency]float64)
 
-  resp, err := http.Get("http://0.0.0.0:14555/")
+  /*resp, err := http.Get("http://0.0.0.0:14555/")
 
   if err != nil || resp.StatusCode != 200 {
     panic("could not reach local cancel server")
-  }
+  }*/
 
   return &x
 }
@@ -88,6 +87,37 @@ func (x *MtGox) GetResponses() {
   fmt.Println("-----------------")
   fmt.Println(MTGOX_ORDERS)
   x.request(MTGOX_ORDERS, nil)
+}
+
+func (x *MtGox) SetOrders(
+    newBook *SimpleBook,
+    priceThreshold float64) error {
+  var orders SimpleBook = x.orders
+  oldBook := orders
+  j := 0
+
+  for i := 0; i < x.orders.BidsLength(); i++ {
+    order, _ := newBook.GetBid(i)
+
+    for oldBook.BidsLength() > 0 {
+      bid, _ := oldBook.GetBid(j)
+
+      if bid.Price > order.Price * (1 + priceThreshold) {
+        err := x.CancelOrder(bid)
+        if err != nil { return err }
+
+        oldBook.RemoveBid(j)
+      } else if bid.Price > order.Price * (1 - priceThreshold) {
+        j++;
+        break;
+      } else {
+        err := x.AddOrder(true, order.Price, order.Size)
+        if err != nil { return nil }
+      }
+    }
+  }
+
+  return nil
 }
 
 func (x *MtGox) AddOrder(isBuy bool, price, size float64) error {
@@ -144,6 +174,8 @@ func (x *MtGox) CancelOrder(order Quote) error {
   if err != nil {
     return err
   }
+
+  x.orders.Remove(order)
 
   return nil
 }
@@ -281,8 +313,7 @@ func (x *MtGox) FetchAccounts() error {
   }
 
   r := body.(map[string]interface{})
-
-  x.fee = r["Trade_Fee"].(float64)
+  x.fee = r["Trade_Fee"].(float64) * 0.01
 
   wallets := r["Wallets"].(map[string]interface{})
 

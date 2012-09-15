@@ -28,17 +28,20 @@ func CurrencyString(c Currency) string {
 }
 
 type Exchange interface {
-  FetchDepth() error
-  FetchOrders() error
-  FetchAccounts() error
-  FetchTrades() error
-  GetDepth() *SimpleBook
-  GetOrders() *SimpleBook
-  GetTrades() []Trade
-  GetFee() float64
-  GetBalance(Currency) float64
-  GetMidpoint() float64
-  GetLast() float64
+  FetchDepth()            error
+  FetchOrders()           error
+  FetchAccounts()         error
+  FetchTrades()           error
+  GetDepth()              *SimpleBook
+  GetOrders()             *SimpleBook
+  GetTrades()             []Trade
+  GetFee()                float64
+  GetBalance(Currency)    float64
+  GetMidpoint()           float64
+  GetLast()               float64
+  CancelOrder(Quote)      error
+  CancelAll()             error
+  SetOrders(*SimpleBook, float64)  error
 }
 
 type HTTPClient interface {
@@ -63,6 +66,10 @@ type Quote struct {
   ExtId     string
 }
 
+func (x *Quote) Equals(q Quote) bool {
+  return (x.Price == q.Price && x.Size == q.Size && x.IsBuy == q.IsBuy && x.Currency == q.Currency && x.Start == q.Start && x.End == q.End && x.ExtId == q.ExtId)
+}
+
 func NewQuote(price, size float64, isBuy bool) Quote {
   return Quote{Price: price, Size: size, IsBuy: isBuy, Currency: USD}
 }
@@ -73,6 +80,10 @@ func EmptyQuote() Quote {
 
 func NewTrade(price, size float64, c Currency, isBuy bool, timestamp time.Time) Trade {
   return Trade{Price: price, Size: size, Currency: c, IsBuy: isBuy, Timestamp: timestamp}
+}
+
+func ftoa(x float64) string {
+  return strconv.FormatFloat(x, 'f', 5, 64)
 }
 
 
