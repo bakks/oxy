@@ -136,9 +136,10 @@ describe MtGox do
   end
 
   it 'should cancel orders' do
+    cancel = asset('mtgox/cancel.json')
     stub_request(:post, 'https://mtgox.com/code/cancelOrder.php')
         .with(:body => {'token' => @mtgox.token, 'oid' => 'abc123'})
-        .to_return(:body => '{"result":"success","return":[]}')
+        .to_return(:body => cancel)
 
     order = Quote.new(true, 1, 1, nil, nil, 'abc123')
     @mtgox.cancelOrder order
