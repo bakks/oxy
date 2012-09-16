@@ -17,6 +17,32 @@ describe MtGox do
     @mtgox = MtGox.new
   end
 
+  before(:each) do
+    orders = asset('mtgox/orders.json')
+    stub_request(:post, 'https://mtgox.com/api/1/generic/private/orders')
+        .to_return(:body => orders)
+  end
+
+  it 'should set a new order book' do
+    @mtgox.fetchOrders
+    @mtgox.orders.bids.size.should == 1
+    @mtgox.orders.bids[0].price.should == 10
+
+    book = Book.new
+    book.add Quote.new(true, 10.04, 0.1)
+    book.add Quote.new(true, 10.01, 0.1)
+    book.add Quote.new(true, 10.5, 0.1)
+
+    #book.add Quote.new(false, 12.01, 0.1)
+    #book.add Quote.new(false, 14, 0.1)
+
+    @mtgox.expects(:cancelOrder).never
+    @mtgox.expects(:addOrder).times(2)
+        .with { |o| (o.isBuy && (o.price == 10.5 || o.price == 10.01)) || (!o.isBuy && o.price == 14) }
+
+    @mtgox.setOrders book, 0.005
+  end
+
   it 'should fetch accounts' do
     info = asset('mtgox/info.json')
     stub_request(:post, 'https://mtgox.com/api/1/generic/private/info')
@@ -31,21 +57,26 @@ describe MtGox do
   end
 
   it 'should fetch orders' do
-    orders = asset('mtgox/orders.json')
-    stub_request(:post, 'https://mtgox.com/api/1/generic/private/orders')
-        .to_return(:body => orders)
-
     @mtgox.fetchOrders
     orders = @mtgox.orders
     orders.bids.size.should == 1
-    orders.asks.size.should == 0
+    orders.asks.size.should == 1
 
     bid = orders.bids[0]
-    bid.price.should == 0.00001
+    bid.price.should == 10.0
     bid.size.should == 0.1
     bid.isBuy.should == true
     bid.start.to_i.should == 1346373055
+    bid.start.nsec.should == 313253000
     bid.extId.should == 'f4a11c80-a27e-40a7-9913-2706f79ef1f6'
+
+    ask = orders.asks[0]
+    ask.price.should == 12.0
+    ask.size.should == 0.1
+    ask.isBuy.should == false
+    ask.start.to_i.should == 1346373056
+    ask.start.nsec.should == 313253000
+    ask.extId.should == 'a4a11c80-a27e-40a7-9913-2706f79ef1f6'
   end
 
   it 'should fetch trades' do
@@ -67,6 +98,8 @@ describe MtGox do
   end
 
   it 'should fetch depth' do
+    @mtgox.midpoint.should == -1
+
     depth = asset('mtgox/fulldepth.json')
     stub_request(:post, 'https://mtgox.com/api/1/BTCUSD/fulldepth')
         .to_return(:body => depth)
@@ -88,6 +121,8 @@ describe MtGox do
     ask.size.should == 2.99
     ask.start.to_i.should == 1344229184
     ask.start.nsec.should == 648281000
+
+    @mtgox.midpoint.should == (10.7931 + 10.8699) / 2
 
     verifyDepth(@mtgox)
   end

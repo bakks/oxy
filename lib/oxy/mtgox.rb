@@ -58,12 +58,56 @@ class MtGox
     puts 'initialized MtGox'
   end
 
-  def addOrder isBuy, price, size
-    request @mtgox_add, {
-      :type => (isBuy ? 'bid' : 'ask'),
-      :amount_int => size * 100000000,
-      :price_int => price * 100000
-    }
+  def midpoint
+    return -1 if depth.bids.size == 0 or depth.asks.size == 0
+    return (depth.bids[0].price + depth.asks[0].price) / 2
+  end
+
+  def addOrder x, price = nil, size = nil
+    if x.is_a? Quote
+      request @mtgox_add, {
+        :type => (x.isBuy ? 'bid' : 'ask'),
+        :amount_int => x.size * 100000000,
+        :price_int => x.price * 100000
+      }
+    elsif x.class == TrueClass or x.class == FalseClass
+      raise 'invalid arguments to addOrder' unless price and size
+      request @mtgox_add, {
+        :type => (x ? 'bid' : 'ask'),
+        :amount_int => size * 100000000,
+        :price_int => price * 100000
+      }
+    else
+      raise 'invalid arguments to addOrder'
+    end
+  end
+
+  def setOrders newBook, threshold
+    i = 0
+    newOrders = []
+
+    newBook.bids.each do |bid|
+      flag = false
+
+      while orders.bids.size > 0 and i < orders.bids.length
+        oldBid = orders.bids[i]
+
+        if oldBid.price > bid.price * (1 + threshold)
+          cancelOrder oldBid
+          orders.removeBid i
+          next
+        elsif oldBid.price > bid.price * (1 - threshold)
+          i += 1
+          flag = true
+          break
+        end
+        break
+      end
+
+      newOrders << bid unless flag
+    end
+
+    newOrders.each { |o| addOrder(o) }
   end
 
   def cancelAll
@@ -109,7 +153,10 @@ class MtGox
 
       price = o['price']['value'].to_f
       size = o['amount']['value'].to_f
-      start = Time.at(o['date'])
+      t = o['priority'].to_i
+      sec = t / 1000000
+      nsec = (t - (t / 1000000) * 1000000)
+      start = Time.at(sec, nsec)
       extId = o['oid']
 
       order = Quote.new(isBuy, price, size, start, nil, extId)
