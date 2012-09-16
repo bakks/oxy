@@ -1,6 +1,5 @@
 require 'helper'
-require 'book'
-require 'common'
+require 'oxy'
 
 describe Book do
 

@@ -1,5 +1,5 @@
 require 'helper'
-require 'common'
+require 'oxy'
 
 describe Quote do
 
