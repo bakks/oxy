@@ -15,6 +15,7 @@ class MtGox
   attr_reader :orders
   attr_reader :trades
   attr_reader :depth
+  attr_reader :token
 
   def initialize
     puts 'initializing MtGox...'
@@ -65,13 +66,24 @@ class MtGox
     }
   end
 
+  def cancelAll
+    @orders.bids.each { |o| cancelOrder(o) }
+    @orders.asks.each { |o| cancelOrder(o) }
+  end
+
   def cancelOrder order
     raise 'order must be a Quote' unless order.is_a? Quote
     unless order.extId != nil and order.extId != ""
       raise 'order has no external id' 
     end
 
-    @agent.post(@domain + @mtgox_cancel, {:oid => order.extId})
+    r = @agent.post(@domain + @mtgox_cancel, {
+      :token => @token,
+      :oid => order.extId
+    })
+
+    response = JSON(r.body)
+    puts 'failed to cancel with error: ' + r if response['error']
   end
 
   def fetchAccounts

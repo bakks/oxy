@@ -1,6 +1,7 @@
-require 'helper'
+require 'spec_helper'
 require 'oxy'
-require 'commonspec'
+require 'spec_common'
+require 'webmock/rspec'
 
 describe MtGox do
 
@@ -94,15 +95,15 @@ describe MtGox do
   it 'should add orders' do
     stub_request(:post, 'https://mtgox.com/api/1/BTCUSD/private/order/add')
         .with(:body => hash_including({"amount_int"=>"400000000", "price_int"=>"200000", "type"=>"bid"}))
-        .to_return(:body => '{"result":"success"}')
+        .to_return(:body => '{"result":"success","return":[]}')
 
     @mtgox.addOrder(true, 2, 4)
   end
 
   it 'should cancel orders' do
     stub_request(:post, 'https://mtgox.com/code/cancelOrder.php')
-        .with(:body => {'oid' => 'abc123'})
-        .to_return(:body => '{"result":"success"}')
+        .with(:body => {'token' => @mtgox.token, 'oid' => 'abc123'})
+        .to_return(:body => '{"result":"success","return":[]}')
 
     order = Quote.new(true, 1, 1, nil, nil, 'abc123')
     @mtgox.cancelOrder order

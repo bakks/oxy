@@ -1,4 +1,4 @@
-require 'helper'
+require 'spec_helper'
 require 'oxy'
 
 describe Quote do
