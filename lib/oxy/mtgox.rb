@@ -10,6 +10,7 @@ MTGOX_PASSWORD  = 'Q3eGPwULhPtn'
 MTGOX_DOMAIN    = 'https://mtgox.com'
 
 class MtGox
+  @@log = Log.new('mtgox')
   attr_reader :fee
   attr_reader :balance
   attr_reader :orders
@@ -18,7 +19,7 @@ class MtGox
   attr_reader :token
 
   def initialize
-    puts 'initializing MtGox...'
+    @@log.info 'initializing MtGox...'
 
     @key        = MTGOX_KEY
     @secret     = MTGOX_SECRET
@@ -37,13 +38,11 @@ class MtGox
     response = @agent.post(@domain + '/code/login.json',
       {:username => @username, :password => @password})
 
-    puts response.body
-
     page = @agent.get(@domain)
     @token = /var token = "(\w+)"/.match(page.body)[1]
     raise 'no token found' unless @token
 
-    puts 'token: ' + @token
+    @@log.info 'token: ' + @token
 
     @client = Faraday.new(:url => @domain) do |faraday|
       faraday.request  :url_encoded
@@ -52,14 +51,14 @@ class MtGox
 
     @depth      = Book.new
     @orders     = Book.new
-    @fee        = -1
+    @fee        = nil
     @balance    = {}
 
-    puts 'initialized MtGox'
+    @@log.info 'initialized MtGox'
   end
 
   def midpoint
-    return -1 if depth.bids.size == 0 or depth.asks.size == 0
+    return nil if depth.bids.size == 0 or depth.asks.size == 0
     return (depth.bids[0].price + depth.asks[0].price) / 2
   end
 
@@ -71,18 +70,20 @@ class MtGox
         :price_int => x.price * 100000
       }
     elsif x.class == TrueClass or x.class == FalseClass
-      raise 'invalid arguments to addOrder' unless price and size
+      @@log.error 'invalid arguments to addOrder' unless price and size
       request @mtgox_add, {
         :type => (x ? 'bid' : 'ask'),
         :amount_int => size * 100000000,
         :price_int => price * 100000
       }
     else
-      raise 'invalid arguments to addOrder'
+      @@log.error 'invalid arguments to addOrder'
     end
   end
 
   def setOrders newBook, threshold
+    @@log.info "setOrders #{newBook.bids.size} bids #{newBook.asks.size} asks"
+
     i = 0
     newOrders = []
 
@@ -111,15 +112,19 @@ class MtGox
   end
 
   def cancelAll
+    @@log.info "cancelAll #{orders.bids.size} bids #{orders.asks.size} asks"
     @orders.bids.each { |o| cancelOrder(o) }
     @orders.asks.each { |o| cancelOrder(o) }
   end
 
   def cancelOrder order
-    raise 'order must be a Quote' unless order.is_a? Quote
+    @@log.error 'order must be a Quote' unless order.is_a? Quote
     unless order.extId != nil and order.extId != ""
-      raise 'order has no external id' 
+      @@log.error 'order has no external id' 
     end
+
+    type = (order.isBuy ? 'bid' : 'ask')
+    @@log.info "cancelOrder #{type} #{order.size} at #{order.price}, #{order.start ? order.start.iso8601 : ''}, #{order.extId}"
 
     r = @agent.post(@domain + @mtgox_cancel, {
       :token => @token,
@@ -127,44 +132,66 @@ class MtGox
     })
 
     response = JSON(r.body)
-    puts 'failed to cancel with error: ' + r if response['error']
+    @@log.warn 'failed to cancel with error: ' + r if response['error']
   end
 
   def fetchAccounts
+    @@log.info 'fetchAccounts'
     x = request @mtgox_info
 
     @fee = x['Trade_Fee'] * 0.01
 
+    s = ''
+
     x['Wallets'].each do |k, v|
       balance = v['Balance']['value'].to_f
       @balance[k.intern] = balance
+      s += "#{k} #{balance} "
+    end
+
+    @@log.info "info: fee #{@fee} #{s}"
+
+    if midpoint
+      value = @balance[:BTC] * midpoint + @balance[:USD]
+      @@log.info "info: value #{value}"
     end
   end
 
   def fetchOrders
+    @@log.info 'fetchOrders'
     x = request @mtgox_orders
 
     @orders.clear
 
+    bids = 0
+    asks = 0
+
     x.each do |o|
       type = o['type']
       isBuy = (type == 'bid')
-      raise "bad order type: #{type}" unless type == 'bid' or type == 'ask'
+      @@log.error "bad order type: #{type}" unless type == 'bid' or type == 'ask'
 
       price = o['price']['value'].to_f
       size = o['amount']['value'].to_f
       t = o['priority'].to_i
       sec = t / 1000000
       nsec = (t - (t / 1000000) * 1000000)
-      start = Time.at(sec, nsec)
+      start = Time.at(sec, nsec).getutc
       extId = o['oid']
 
       order = Quote.new(isBuy, price, size, start, nil, extId)
       @orders.add order
+
+      @@log.info "found order #{type} #{size} at #{price}, #{start.iso8601}, #{extId}"
+      bids += 1 if isBuy
+      asks += 1 if !isBuy
     end
+
+    @@log.info "found #{bids} bids #{asks} asks"
   end
 
   def fetchTrades
+    @@log.info 'fetchTrades'
     x = request @mtgox_trades
 
     @trades = []
@@ -176,15 +203,19 @@ class MtGox
 
       price = t['price'].to_f
       size = t['amount'].to_f
-      timestamp = Time.at(t['date'])
+      timestamp = Time.at(t['date']).getutc
       extId = t['tid']
 
       trade = Trade.new isBuy, price, size, timestamp, extId
       @trades << trade
     end
+
+    @@log.info "fetched #{@trades.size} trades"
   end
 
   def fetchDepth
+    @@log.info 'fetchDepth'
+
     x = request @mtgox_fulldepth
     @depth.clear
 
@@ -195,7 +226,7 @@ class MtGox
       t = x['stamp'].to_i
       sec = t / 1000000
       nsec = (t - (t / 1000000) * 1000000)
-      timestamp = Time.at(sec, nsec)
+      timestamp = Time.at(sec, nsec).getutc
 
       quote = Quote.new isBuy, price, size, timestamp
       @depth.add quote
@@ -208,17 +239,19 @@ class MtGox
       t = x['stamp'].to_i
       sec = t / 1000000
       nsec = (t - (t / 1000000) * 1000000)
-      timestamp = Time.at(sec, nsec)
+      timestamp = Time.at(sec, nsec).getutc
 
       quote = Quote.new isBuy, price, size, timestamp
       @depth.add quote
     end
+
+    @@log.info "fetched #{@depth.bids.size} bids #{@depth.asks.size} asks"
   end
 
   private
 
   def request path, args = {}
-    args[:nonce] = Time.now.to_i * 1000000000 + Time.now.nsec
+    args[:nonce] = Time.now.getutc.to_i * 1000000000 + Time.now.getutc.nsec
     body = args.collect{|k, v| "#{k}=#{v}"} * '&'
 
     signature = Base64.strict_encode64(
@@ -236,13 +269,13 @@ class MtGox
     response = @client.post(path, body, headers)
 
     unless response.status == 200
-      puts "got back #{response.status} from #{path}" 
+      @@log.warn "got back #{response.status} from #{path}" 
     end
   
     r = JSON(response.body)
 
     if r['result'] != 'success' || !r['return']
-      puts "no result from #{path} body: #{response.body}"
+      @@log.warn "no result from #{path} body: #{response.body}"
     end
     
     return r['return']

@@ -98,7 +98,7 @@ describe MtGox do
   end
 
   it 'should fetch depth' do
-    @mtgox.midpoint.should == -1
+    @mtgox.midpoint.should == nil
 
     depth = asset('mtgox/fulldepth.json')
     stub_request(:post, 'https://mtgox.com/api/1/BTCUSD/fulldepth')

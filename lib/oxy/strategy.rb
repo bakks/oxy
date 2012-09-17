@@ -1,5 +1,6 @@
 class Strategy
-  @@takeRate          = 0.1
+  @@log               = Log.new 'strategy'
+  @@takeRate          = 0.2
   @@takeIncrement     = 0.2
   @@levels            = 1
   @@defaultSize       = 0.1
@@ -20,8 +21,8 @@ class Strategy
     fee = @exch.fee
     midpt = @exch.midpoint
 
-    raise "bad fee: #{fee}" if fee < 0 or fee > 0.006
-    raise "bad midpt: #{midpt}" if midpt < 4 or midpt > 20
+    @@log.error "bad fee: #{fee}" if !fee or fee < 0 or fee > 0.006
+    @@log.error "bad midpt: #{midpt}" if !midpt or midpt < 4 or midpt > 20
 
     book = Book.new
 
@@ -36,6 +37,7 @@ class Strategy
 
       book.add bid
       book.add ask
+      @@log.info "new order book level #{i} : bid #{bid.size} at #{bid.price}, ask #{ask.size} at #{ask.price}"
     end
 
     @exch.fetchOrders
