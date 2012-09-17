@@ -17,9 +17,15 @@ describe Strategy do
     exch = mock('MtGox')
     exch.stubs(:fetchDepth)
     exch.stubs(:fetchOrders)
+    exch.stubs(:fetchAccounts)
+    exch.stubs(:value).returns(100)
+    exch.stubs(:midpoint).returns(10)
     exch.stubs(:depth).returns(testBook)
     exch.stubs(:fee).returns(0.006)
+    exch.stubs(:cancelAll)
     exch.stubs(:midpoint).returns(10.5)
+
+    Strategy.stubs(:sleep)
 
     exch.stubs(:setOrders).with do |book|
       book.bids.size.should == 1
@@ -37,7 +43,9 @@ describe Strategy do
     end
     MtGox.stubs(:new).returns(exch)
 
-    Strategy.new(MtGox.new).iteration
+    strat = Strategy.new(MtGox.new)
+    strat.stop
+    strat.run
   end
 
 end

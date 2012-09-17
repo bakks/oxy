@@ -62,6 +62,11 @@ class MtGox
     return (depth.bids[0].price + depth.asks[0].price) / 2
   end
 
+  def value
+    return nil unless midpoint and @balance[:USD] and @balance[:BTC]
+    return @balance[:USD] + @balance[:BTC] * midpoint
+  end
+
   def addOrder x, price = nil, size = nil
     if x.is_a? Quote
       request @mtgox_add, {
@@ -132,7 +137,13 @@ class MtGox
     })
 
     response = JSON(r.body)
-    @@log.warn 'failed to cancel with error: ' + r if response['error']
+
+    @@log.debug "post #{@mtgox_cancel} token=#{@token}&oid=#{order.extId}"
+
+    unless r.code == 200
+      @@log.warn "got back #{r.code} from #{@mtgox_cancel}" 
+    end
+    @@log.warn 'failed to cancel with error: ' + response['error'] if response['error']
   end
 
   def fetchAccounts
@@ -153,7 +164,7 @@ class MtGox
 
     if midpoint
       value = @balance[:BTC] * midpoint + @balance[:USD]
-      @@log.info "info: value #{value}"
+      @@log.info "info: value $#{value}"
     end
   end
 
@@ -266,6 +277,7 @@ class MtGox
       'Content-type' => 'application/x-www-form-urlencoded'
     }
 
+    @@log.debug "post #{path} #{body}"
     response = @client.post(path, body, headers)
 
     unless response.status == 200
