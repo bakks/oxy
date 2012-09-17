@@ -27,8 +27,12 @@ class MtGox
     @password   = MTGOX_PASSWORD
     @domain     = MTGOX_DOMAIN
 
+    @@log.info "domain: #{@domain}"
+    @@log.info "username: #{@username}"
+
     @mtgox_info       = '/api/1/generic/private/info'
     @mtgox_orders     = '/api/1/generic/private/orders'
+    @mtgox_depth      = '/api/1/BTCUSD/depth'
     @mtgox_fulldepth  = '/api/1/BTCUSD/fulldepth'
     @mtgox_trades     = '/api/1/BTCUSD/trades'
     @mtgox_cancel     = '/code/cancelOrder.php'
@@ -89,9 +93,9 @@ class MtGox
   def setOrders newBook, threshold
     @@log.info "setOrders #{newBook.bids.size} bids #{newBook.asks.size} asks"
 
-    i = 0
     newOrders = []
 
+    i = 0
     newBook.bids.each do |bid|
       flag = false
 
@@ -111,6 +115,28 @@ class MtGox
       end
 
       newOrders << bid unless flag
+    end
+
+    i = 0
+    newBook.asks.each do |ask|
+      flag = false
+
+      while orders.asks.size > 0 and i < orders.asks.length
+        oldAsk = orders.asks[i]
+
+        if oldAsk.price < ask.price * (1 - threshold)
+          cancelOrder oldAsk
+          orders.removeAsk i
+          next
+        elsif oldAsk.price < ask.price * (1 + threshold)
+          i += 1
+          flag = true
+          break
+        end
+        break
+      end
+
+      newOrders << ask unless flag
     end
 
     newOrders.each { |o| addOrder(o) }
@@ -227,7 +253,7 @@ class MtGox
   def fetchDepth
     @@log.info 'fetchDepth'
 
-    x = request @mtgox_fulldepth
+    x = request @mtgox_depth
     @depth.clear
 
     x['bids'].each do |x|

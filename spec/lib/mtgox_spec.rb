@@ -33,11 +33,11 @@ describe MtGox do
     book.add Quote.new(true, 10.01, 0.1)
     book.add Quote.new(true, 10.5, 0.1)
 
-    #book.add Quote.new(false, 12.01, 0.1)
-    #book.add Quote.new(false, 14, 0.1)
+    book.add Quote.new(false, 12.01, 0.1)
+    book.add Quote.new(false, 14, 0.1)
 
     @mtgox.expects(:cancelOrder).never
-    @mtgox.expects(:addOrder).times(2)
+    @mtgox.expects(:addOrder).times(3)
         .with { |o| (o.isBuy && (o.price == 10.5 || o.price == 10.01)) || (!o.isBuy && o.price == 14) }
 
     @mtgox.setOrders book, 0.005
@@ -101,7 +101,7 @@ describe MtGox do
     @mtgox.midpoint.should == nil
 
     depth = asset('mtgox/fulldepth.json')
-    stub_request(:post, 'https://mtgox.com/api/1/BTCUSD/fulldepth')
+    stub_request(:post, 'https://mtgox.com/api/1/BTCUSD/depth')
         .to_return(:body => depth)
 
     @mtgox.fetchDepth

@@ -20,3 +20,9 @@ end
 task :integration do
   runcmd 'rspec --tag integration -P **/*_integration_spec.rb'
 end
+
+task :run do
+  Dir.chdir 'lib'
+  ENV['OXY_ENVIRONMENT'] = 'production'
+  require './oxy'
+end

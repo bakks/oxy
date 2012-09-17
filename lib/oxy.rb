@@ -9,16 +9,25 @@ elsif e == 'integration'
   $env = :integration
 end
 
-require 'oxy/logger'
+require_relative 'oxy/logger'
 
 log = Log.new 'oxy'
-
 log.info 'starting oxy...'
+log.info "environment: #{$env}"
 
-require 'oxy/common'
-require 'oxy/book'
-require 'oxy/mtgox'
-require 'oxy/strategy'
+require_relative 'oxy/common'
+require_relative 'oxy/book'
+require_relative 'oxy/mtgox'
+require_relative 'oxy/strategy'
+
+if $env == :production
+  mtgox = MtGox.new
+  strat = Strategy.new(mtgox)
+end
 
 log.info "oxy initialized : #{Time.now.getutc}"
+
+if $env == :production
+  strat.run
+end
 

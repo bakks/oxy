@@ -1,6 +1,6 @@
 class Strategy
   @@log               = Log.new 'strat'
-  @@sleep             = 15
+  @@interval          = 15
   @@takeRate          = 0.2
   @@takeIncrement     = 0.2
   @@levels            = 1
@@ -15,6 +15,14 @@ class Strategy
     @exch = exchange
     @exch.fetchOrders
     @exch.cancelAll
+
+    @@log.info "interval        : #{@@interval}"
+    @@log.info "takeRate        : #{@@takeRate}"
+    @@log.info "takeIncrement   : #{@@takeIncrement}"
+    @@log.info "levels          : #{@@levels}"
+    @@log.info "defaultSize     : #{@@defaultSize}"
+    @@log.info "priceThreshold  : #{@@priceThreshold}"
+
     @@log.info 'strategy initialized'
   end
 
@@ -28,10 +36,14 @@ class Strategy
   end
 
   def run
+    @@log.info 'running strategy...'
+
     @exch.fetchDepth
     @exch.fetchAccounts
     startValue = @exch.value
     startMidpt = @exch.midpoint
+    startUSD   = @exch.balance[:USD]
+    startBTC   = @exch.balance[:BTC]
 
     @@log.info "starting value $#{startValue} exchange rate #{startMidpt}"
 
@@ -40,11 +52,14 @@ class Strategy
       iteration
 
       @@log.info "value $#{@exch.value} exchange rate #{@exch.midpoint}"
-      @@log.info "value delta $#{@exch.value - startValue} rate delta #{@exch.midpoint - startMidpt}"
-      @@log.info "sleeping for #{@@sleep}s"
+      @@log.info "value delta: $#{@exch.value - startValue}"
+      @@log.info "rate delta : #{@exch.midpoint - startMidpt}"
+      @@log.info "USD delta  : #{@exch.balance[:USD] - startUSD}"
+      @@log.info "BTC delta  : #{@exch.balance[:BTC] - startBTC}"
+      @@log.info "sleeping for #{@@interval}s"
 
       break unless @@run
-      sleep @@sleep
+      sleep @@interval
       break unless @@run
       @@log.info 'awake, running strategy'
     end
@@ -78,6 +93,6 @@ class Strategy
     end
 
     @exch.fetchOrders
-    @exch.setOrders book
+    @exch.setOrders book, @@priceThreshold
   end
 end

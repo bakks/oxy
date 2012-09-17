@@ -15,6 +15,7 @@ describe Strategy do
     testBook.add Quote.new(false, 11, 1)
 
     exch = mock('MtGox')
+    exch.stubs(:balance).returns({:USD => 100, :BTC => 100})
     exch.stubs(:fetchDepth)
     exch.stubs(:fetchOrders)
     exch.stubs(:fetchAccounts)
