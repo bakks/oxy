@@ -1,1 +1,1 @@
-ENV['OXY_ENVIRONMENT'] = 'testing'
+ENV['OXY_ENVIRONMENT'] = 'testing' unless ENV['OXY_ENVIRONMENT'] == 'integration'

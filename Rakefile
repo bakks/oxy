@@ -14,7 +14,6 @@ def runcmd cmd
 end
 
 task :test do
-  ENV['OXY_ENVIRONMENT'] = 'testing'
   runcmd 'rspec --tag ~integration'
 end
 

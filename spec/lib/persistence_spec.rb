@@ -5,6 +5,7 @@ describe Persistence do
 
   before(:all) do 
     @mongodb = Mongo::Connection.new['oxy_' + $env.to_s]
+    @mongodb['quotes'].drop
   end
 
   it 'should persist http requests' do
@@ -21,4 +22,19 @@ describe Persistence do
     doc['doc']['x'].should == 1
   end
 
+  it 'should persist quotes' do
+    id = 'atoehu83o-aoeu'
+    q = Quote.new(true, 10, 10, Time.now, nil, id)
+    
+    r = @mongodb['quotes'].find(:ext_id => id)
+    r.to_a.size.should == 0
+
+    Persistence::writeQuote q
+    r = @mongodb['quotes'].find(:ext_id => id)
+    r.to_a.size.should == 1
+
+    Persistence::writeQuote q
+    r = @mongodb['quotes'].find(:ext_id => id)
+    r.to_a.size.should == 1
+  end
 end
