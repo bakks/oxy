@@ -2,6 +2,7 @@ source :rubygems
 
 gem 'eventmachine'
 gem 'em-websocket-client'
+gem 'mongo'
 gem 'mechanize'
 gem 'faraday'
 gem 'json'

@@ -1,2 +1,4 @@
 --colour
+--backtrace
+--require ./spec/spec_testing
 --tag ~integration

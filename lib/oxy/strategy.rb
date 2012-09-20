@@ -8,8 +8,6 @@ class Strategy
   @@priceThreshold    = 0.005
   @@run               = true
 
-  attr_reader :takeRate, :takeIncrement, :levels, :defaultSize, :priceThreshold
-
   def initialize exchange
     @@log.info 'initializing strategy...'
     @exch = exchange
@@ -24,6 +22,10 @@ class Strategy
     @@log.info "priceThreshold  : #{@@priceThreshold}"
 
     @@log.info 'strategy initialized'
+  end
+
+  def takeRate
+    @@takeRate
   end
 
   def stop

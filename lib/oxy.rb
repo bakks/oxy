@@ -19,6 +19,7 @@ require_relative 'oxy/common'
 require_relative 'oxy/book'
 require_relative 'oxy/mtgox'
 require_relative 'oxy/strategy'
+require_relative 'oxy/persistence'
 
 if $env == :production
   mtgox = MtGox.new

@@ -14,10 +14,12 @@ def runcmd cmd
 end
 
 task :test do
+  ENV['OXY_ENVIRONMENT'] = 'testing'
   runcmd 'rspec --tag ~integration'
 end
 
 task :integration do
+  ENV['OXY_ENVIRONMENT'] = 'integration'
   runcmd 'rspec --tag integration -P **/*_integration_spec.rb'
 end
 
