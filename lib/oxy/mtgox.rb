@@ -38,15 +38,7 @@ class MtGox
     @mtgox_cancel     = '/code/cancelOrder.php'
     @mtgox_add        = '/api/1/BTCUSD/private/order/add'
 
-    @agent = Mechanize.new
-    response = @agent.post(@domain + '/code/login.json',
-      {:username => @username, :password => @password})
-
-    page = @agent.get(@domain)
-    @token = /var token = "(\w+)"/.match(page.body)[1]
-    raise 'no token found' unless @token
-
-    @@log.info 'token: ' + @token
+    getToken
 
     @client = Faraday.new(:url => @domain) do |faraday|
       faraday.request  :url_encoded
@@ -59,6 +51,25 @@ class MtGox
     @balance    = {}
 
     @@log.info 'initialized MtGox'
+  end
+
+  def getToken
+    @agent = Mechanize.new
+    path = @domain + '/code/login.json'
+
+    t = Time.now
+    response = @agent.post(path,
+      {:username => @username, :password => @password})
+
+    status = response.code.to_i
+    Persistence::writeHttpRequest response.uri.to_s, t, status
+    @@log.error "login returned #{status}, exiting" unless status == 200
+
+    page = @agent.get(@domain)
+    @token = /var token = "(\w+)"/.match(page.body)[1]
+    raise 'no token found' unless @token
+
+    @@log.info 'token: ' + @token
   end
 
   def midpoint
@@ -157,19 +168,18 @@ class MtGox
     type = (order.isBuy ? 'bid' : 'ask')
     @@log.info "cancelOrder #{type} #{order.size} at #{order.price}, #{order.start ? order.start.iso8601 : ''}, #{order.extId}"
 
+    t = Time.now
     r = @agent.post(@domain + @mtgox_cancel, {
       :token => @token,
       :oid => order.extId
     })
 
     response = JSON(r.body)
+    Persistence::writeHttpRequest r.uri.to_s, t, r.code, response
 
     @@log.debug "post #{@mtgox_cancel} token=#{@token}&oid=#{order.extId}"
-
-    unless r.code == 200
-      @@log.warn "got back #{r.code} from #{@mtgox_cancel}" 
-    end
-    @@log.warn 'failed to cancel with error: ' + response['error'] if response['error']
+    @@log.warn "got back #{r.code} from #{@mtgox_cancel}" unless r.code == 200
+    @@log.warn "failed to cancel with error: #{response['error']}" if response['error']
   end
 
   def fetchAccounts
@@ -304,6 +314,7 @@ class MtGox
     }
 
     @@log.debug "post #{path} #{body}"
+    t = Time.now
     response = @client.post(path, body, headers)
 
     unless response.status == 200
@@ -311,6 +322,8 @@ class MtGox
     end
   
     r = JSON(response.body)
+    path = @client.scheme + "://" + @client.host + path
+    Persistence::writeHttpRequest path, t, response.status, r
 
     if r['result'] != 'success' || !r['return']
       @@log.warn "no result from #{path} body: #{response.body}"
