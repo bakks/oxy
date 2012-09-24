@@ -27,3 +27,17 @@ task :run do
   ENV['OXY_ENVIRONMENT'] = 'production'
   require './oxy'
 end
+
+task :stream do
+  require_relative 'lib/oxy'
+  
+  class Scheduler
+    def push label, msg
+      puts msg
+    end
+  end
+
+  stream = Stream.new(MTGOX_STREAM, Scheduler.new)
+  stream.run
+end
+

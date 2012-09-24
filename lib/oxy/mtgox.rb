@@ -8,6 +8,7 @@ MTGOX_SECRET    = 'KjUXf1eyq/JgX3+LFVm4BzrpQIeqx02YI9LveEzfIO37PQ8Dy8fIFlO8s84eA
 MTGOX_USERNAME  = 'tourbillon'
 MTGOX_PASSWORD  = 'Q3eGPwULhPtn'
 MTGOX_DOMAIN    = 'https://mtgox.com'
+MTGOX_STREAM    = 'ws://websocket.mtgox.com/mtgox?Currency=USD'
 
 class MtGox
   @@log = Log.new('mtgox')
@@ -38,6 +39,10 @@ class MtGox
     @mtgox_cancel     = '/code/cancelOrder.php'
     @mtgox_add        = '/api/1/BTCUSD/private/order/add'
 
+    @channel_trades   = 'dbf1dee9-4f2e-4a08-8cb7-748919a71b21'       
+    @channel_ticker   = 'd5f06780-30a8-4a48-a2f8-7ed181b4a13f'       
+    @channel_depth    = '24e67e0d-1cad-4cc0-9e7a-f8523ef460fe'       
+
     getToken
 
     @client = Faraday.new(:url => @domain) do |faraday|
@@ -51,6 +56,9 @@ class MtGox
     @balance    = {}
 
     @@log.info 'initialized MtGox'
+  end
+
+  def msg msg
   end
 
   def getToken
