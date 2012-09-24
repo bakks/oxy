@@ -30,6 +30,7 @@ def verifyTrades(mtgox)
 
     trade.timestamp.to_i.should be > Time.utc(2012, 'jan', 1, 0, 0, 0).to_i
     trade.timestamp.to_i.should be < Time.now.to_i
+    trade.extId.should_not be nil
   end
 
   bids.should be > 200

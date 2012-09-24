@@ -257,6 +257,8 @@ class MtGox
       @trades << trade
     end
 
+    Persistence::writeTrades @trades
+
     @@log.info "fetched #{@trades.size} trades"
   end
 
@@ -291,6 +293,8 @@ class MtGox
       quote = Quote.new isBuy, price, size, timestamp
       @depth.add quote
     end
+
+    Persistence::writeBook @depth
 
     @@log.info "fetched #{@depth.bids.size} bids #{@depth.asks.size} asks"
   end

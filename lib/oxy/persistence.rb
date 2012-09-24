@@ -37,11 +37,14 @@ class Persistence
       :size => quote.size,
       :start => (quote.start ? quote.start.getutc : nil),
       :finish => (quote.finish ? quote.finish.getutc : nil),
-      :ext_id => quote.extId
+      :extId => quote.extId
     }
 
     cond = {
-      :ext_id => quote.extId
+      :is_buy => quote.isBuy,
+      :price => quote.price,
+      :size => quote.size,
+      :start => (quote.start ? quote.start.getutc : nil)
     }
 
     db[@@quotes].update(cond, x, :upsert => true)

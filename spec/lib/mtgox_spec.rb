@@ -87,7 +87,7 @@ describe MtGox do
     @mtgox.fetchTrades
     @mtgox.trades.size.should be > 500
     
-    trade = @mtgox.trades[0]
+    trade = @mtgox.trades[-1]
     trade.price.should == 10.8999
     trade.size.should == 21.80517958
     trade.isBuy.should == true
