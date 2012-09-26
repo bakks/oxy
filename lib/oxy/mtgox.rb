@@ -59,6 +59,18 @@ class MtGox
   end
 
   def msg msg
+    chan = msg['channel']
+
+    if chan == @channel_trades
+      trade = msg['trade']
+      size = trade['amount']
+      price = trade['']
+    end
+    elsif chan == @channel_depth
+    elsif chan == @channel_ticker
+    else
+      @@log.error "could not match message channel: #{chan}"
+    end
   end
 
   def getToken

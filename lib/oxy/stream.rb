@@ -33,7 +33,6 @@ class Stream
       end
 
       conn.stream do |msg|
-        pp msg
         begin
           @schedule.push @@label, JSON(msg)
         rescue Exception => e
