@@ -16,21 +16,45 @@ class Book
 
     if quote.isBuy
       for i in 0..(@bids.size - 1)
-        if quote.price > @bids[i].price
+        if quote.price == @bids[i].price
+          x = @bids[i]
+          x.finish = quote.start
+
+          if quote.size == 0
+            @bids.delete_at(i)
+          else
+            @bids[i] = quote
+          end
+
+          return x
+        elsif quote.price > @bids[i].price
           @bids.insert(i, quote)
-          return
+          return nil
         end
       end
       @bids << quote
     else
       for i in 0..(@asks.size - 1)
-        if quote.price < @asks[i].price
+        if quote.price == @asks[i].price
+          x = @asks[i]
+          x.finish = quote.start
+
+          if quote.size == 0
+            @asks.delete_at(i)
+          else
+            @asks[i] = quote
+          end
+
+          return x
+        elsif quote.price < @asks[i].price
           @asks.insert(i, quote)
-          return
+          return nil
         end
       end
       @asks << quote
     end
+
+    nil
   end
 
   def bids
@@ -65,6 +89,14 @@ class Book
 
   def removeAsk i
     @asks.delete_at i
+  end
+
+  def find timestamp
+    x = nil
+    @bids.each { |bid| x = bid if bid.start == timestamp }
+    @asks.each { |ask| x = ask if ask.start == timestamp }
+
+    return x
   end
 
   def print

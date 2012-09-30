@@ -1,0 +1,20 @@
+{
+  "channel":"dbf1dee9-4f2e-4a08-8cb7-748919a71b21",
+  "op":"private",
+  "origin":"broadcast",
+  "private":"trade",
+  "trade":{
+    "amount":0.22888,
+    "amount_int":"22888000",
+    "date":1348629010,
+    "item":"BTC",
+    "price":12.0751,
+    "price_currency":"USD",
+    "price_int":"1207510",
+    "primary":"Y",
+    "properties":"market",
+    "tid":"1348629010832288",
+    "trade_type":"ask",
+    "type":"trade"
+  }
+}

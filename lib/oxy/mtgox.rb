@@ -52,21 +52,89 @@ class MtGox
 
     @depth      = Book.new
     @orders     = Book.new
+    @trades     = []
     @fee        = nil
     @balance    = {}
 
     @@log.info 'initialized MtGox'
   end
 
+  def bid
+    @depth.bids[0]
+  end
+
+  def ask
+    @depth.asks[0]
+  end
+
+  def stream_trade msg
+    trade = msg['trade']
+    currency = trade['price_currency']
+    return if currency != 'USD'
+
+    price = trade['price']
+    size = trade['amount']
+    extId = trade['tid']
+
+    t = trade['tid'].to_i
+    sec = t / 1000000
+    nsec = (t - (t / 1000000) * 1000000)
+    timestamp = Time.at(sec, nsec).getutc
+
+    side = trade['trade_type']
+    isBuy = (side == 'bid')
+    raise "bad trade type: #{side}" unless side == 'bid' or side == 'ask'
+
+    t = Trade.new isBuy, price, size, timestamp, extId
+    
+    i = @trades.size - 1
+    while i >= 0 and @trades[i].timestamp > timestamp
+      i -= 1
+    end
+
+    if i >= 0
+      @trades.insert(i + 1, t) unless @trades[i].extId == extId
+    else
+      @trades << t
+    end
+
+    side = isBuy ? 'buy' : 'sell'
+    @@log.info "market trade #{side} #{size} at #{price}"
+
+    Persistence::writeTrade t
+  end
+
+  def stream_depth msg
+    d = msg['depth']
+    currency = d['currency']
+    return if currency != 'USD'
+
+    price = d['price'].to_f
+    size = d['volume'].to_f
+
+    side = d['type_str']
+    isBuy = (side == 'bid')
+    raise "bad trade type: #{side}" unless side == 'bid' or side == 'ask'
+
+    t = d['now'].to_i
+    sec = t / 1000000
+    nsec = (t - (t / 1000000) * 1000000)
+    start = Time.at(sec, nsec).getutc
+
+    q = Quote.new isBuy, price, size, start
+    r = @depth.add q
+
+    Persistence::writeQuote q
+    Persistence::writeQuote r if r
+  end
+
   def msg msg
     chan = msg['channel']
 
     if chan == @channel_trades
-      trade = msg['trade']
-      size = trade['amount']
-      price = trade['']
-    end
+      stream_trade msg
     elsif chan == @channel_depth
+      stream_depth msg
     elsif chan == @channel_ticker
     else
       @@log.error "could not match message channel: #{chan}"
@@ -270,7 +338,12 @@ class MtGox
 
       price = t['price'].to_f
       size = t['amount'].to_f
-      timestamp = Time.at(t['date']).getutc
+
+      tid = t['tid'].to_i
+      sec = tid / 1000000
+      nsec = (tid - (tid / 1000000) * 1000000)
+      timestamp = Time.at(sec, nsec).getutc
+
       extId = t['tid']
 
       trade = Trade.new isBuy, price, size, timestamp, extId
@@ -284,6 +357,11 @@ class MtGox
 
   def fetchDepth
     @@log.info 'fetchDepth'
+
+    if @depth.bids.size > 0 or depth.asks.size > 0
+      @@log.warn "cannot fetch depth twice"
+      return
+    end
 
     x = request @mtgox_depth
     @depth.clear

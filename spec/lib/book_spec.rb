@@ -3,6 +3,76 @@ require 'oxy'
 
 describe Book do
 
+  it 'should only accept one bid at each price level' do
+    t = Time.now
+    q1 = Quote.new(true, 5, 1, t - 10)
+    q2 = Quote.new(true, 5, 3, t - 5)
+
+    book = Book.new
+
+    book.add(q1).should == nil
+    x = book.add(q2)
+
+    book.bids.size.should == 1
+    book.bids[0].size.should == 3
+
+    x.start.to_s.should == (t - 10).to_s
+    x.finish.to_s.should == (t - 5).to_s
+  end
+
+  it 'should only accept one ask at each price level' do
+    q1 = Quote.new(false, 5, 1)
+    q2 = Quote.new(false, 5, 3)
+
+    book = Book.new
+
+    book.add(q1)
+    book.add(q2)
+
+    book.asks.size.should == 1
+    book.asks[0].size.should == 3
+  end
+
+  it 'should delete bids' do
+    t1 = Time.now.getutc - 10
+    t2 = Time.now.getutc
+    q1 = Quote.new(true, 5, 1, t1)
+    q2 = Quote.new(true, 5, 0, t2)
+
+    book = Book.new
+
+    book.add(q1).should == nil
+    x = book.add(q2)
+
+    book.bids.size.should == 0
+
+    x.isBuy.should == true
+    x.price.should == 5
+    x.size.should == 1
+    x.start.should == t1
+    x.finish.should == t2
+  end
+
+  it 'should delete asks' do
+    t1 = Time.now.getutc - 10
+    t2 = Time.now.getutc
+    q1 = Quote.new(false, 5, 1, t1)
+    q2 = Quote.new(false, 5, 0, t2)
+
+    book = Book.new
+
+    book.add(q1).should == nil
+    x = book.add(q2)
+
+    book.asks.size.should == 0
+
+    x.isBuy.should == false
+    x.price.should == 5
+    x.size.should == 1
+    x.start.should == t1
+    x.finish.should == t2
+  end
+
   it 'should order bids correctly' do
     q1 = Quote.new(true, 5, 1)
     q2 = Quote.new(true, 4, 1)

@@ -3,7 +3,7 @@ class Quote
   attr_reader :price
   attr_reader :size
   attr_reader :start
-  attr_reader :finish
+  attr_accessor :finish
   attr_reader :extId
 
   def initialize isBuy = nil, price = nil, size = nil, start = nil, finish = nil, extId = nil

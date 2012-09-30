@@ -15,6 +15,10 @@ describe MtGox do
     stub_request(:get, 'https://mtgox.com/')
         .to_return(:status => 200, :body => loggedInResponse)
     @mtgox = MtGox.new
+
+    Persistence::db['quotes'].drop
+    Persistence::db['trades'].drop
+    Persistence::db['requests'].drop
   end
 
   before(:each) do
@@ -144,4 +148,88 @@ describe MtGox do
     order = Quote.new(true, 1, 1, nil, nil, 'abc123')
     @mtgox.cancelOrder order
   end
+
+  it 'should persist streaming trades' do
+    Persistence::db['trades'].drop
+
+    trade = asset('mtgox/stream_trade.json')
+    trade = JSON(trade)
+
+    @mtgox.msg trade
+    r = Persistence::db['trades'].find(
+      {:is_buy => false, :price => 12.0751, :size => 0.22888})
+
+    a = r.to_a
+
+    a.size.should == 1
+    t = a[0]
+    t['is_buy'].should == false
+    t['price'].should == 12.0751
+    t['size'].should == 0.22888
+    t['timestamp'].to_s.should == Time.at(1348629010, 832288).getutc.to_s
+    t['ext_id'].should == '1348629010832288'
+  end
+
+  it 'should persist streaming depth' do
+    Persistence::db['quotes'].drop
+    stream = asset('mtgox/stream_depth.json')
+    stream = JSON(stream)
+
+    @mtgox.depth.clear
+    @mtgox.depth.bids.size.should == 0
+    @mtgox.depth.asks.size.should == 0
+    
+    @mtgox.msg stream[0]
+
+    @mtgox.depth.bids.size.should == 0
+    @mtgox.depth.asks.size.should == 1
+
+    r = Persistence::db['quotes'].find(
+      {:is_buy => false, :price => 12.5071, :size => 1.7638})
+
+    a = r.to_a
+    a.size.should == 1
+
+    quote = a[0]
+    quote['start'].to_s.should == Time.at(1348628913, 132963).getutc.to_s
+    quote['finish'].should == nil
+
+    @mtgox.msg stream[1]
+
+    @mtgox.depth.bids.size.should == 0
+    @mtgox.depth.asks.size.should == 0
+
+    r = Persistence::db['quotes'].find(
+      {:is_buy => false, :price => 12.5071, :size => 1.7638})
+
+    a = r.to_a
+    a.size.should == 1
+
+    quote = a[0]
+    quote['start'].to_s.should == Time.at(1348628913, 132963).getutc.to_s
+    quote['finish'].to_s.should == Time.at(1348628926, 132963).getutc.to_s
+  end
+
+  it 'should handle streaming data' do
+    Persistence::db['trades'].drop
+
+    stream = asset('mtgox/stream.json')
+    stream = JSON(stream)
+    stream.each { |x| @mtgox.msg x }
+
+    trade = @mtgox.trades[-1]
+    trade.isBuy.should == false
+    trade.price.should == 12.075
+    trade.size.should == 0.17346053
+    trade.extId.should == "1348629512331684"
+    trade.timestamp.to_s.should == Time.at(1348629512, 331684).getutc.to_s
+
+    quote = @mtgox.depth.find Time.at(1348629598, 65187).getutc
+    quote.isBuy.should == true
+    quote.price.should == 12.00261
+    quote.size.should == 0.7138
+
+    verifyTrades(@mtgox)
+  end
+  
 end

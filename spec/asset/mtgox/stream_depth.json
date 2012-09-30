@@ -1,0 +1,38 @@
+[
+  {
+    "channel" : "24e67e0d-1cad-4cc0-9e7a-f8523ef460fe",
+    "depth" : {
+      "currency" : "USD",
+      "item" : "BTC",
+      "now" : "1348628913132963",
+      "price" : "12.5071",
+      "price_int" : "1250710",
+      "total_volume_int" : "176380000",
+      "type" : 1,
+      "type_str" : "ask",
+      "volume" : "1.7638",
+      "volume_int" : "176380000"
+    },
+    "op" : "private",
+    "origin" : "broadcast",
+    "private" : "depth"
+  },
+  {
+    "channel" : "24e67e0d-1cad-4cc0-9e7a-f8523ef460fe",
+    "depth" : {
+      "currency" : "USD",
+      "item" : "BTC",
+      "now" : "1348628926132963",
+      "price" : "12.5071",
+      "price_int" : "1250710",
+      "total_volume_int" : "176380000",
+      "type" : 1,
+      "type_str" : "ask",
+      "volume" : "0.0000",
+      "volume_int" : "000000000"
+    },
+    "op" : "private",
+    "origin" : "broadcast",
+    "private" : "depth"
+  }
+]
