@@ -21,15 +21,21 @@ require_relative 'oxy/mtgox'
 require_relative 'oxy/strategy'
 require_relative 'oxy/persistence'
 require_relative 'oxy/stream'
+require_relative 'oxy/timer'
+require_relative 'oxy/scheduler'
 
-if $env == :production
+def run
   mtgox = MtGox.new
   strat = Strategy.new(mtgox)
+  scheduler = Scheduler.new strat, mtgox
+
+  timer = Timer.new strat.interval, scheduler
+  mtgox.start_stream scheduler
+
+  log.info "oxy initialized : #{Time.now.getutc}"
+
+  return scheduler
 end
 
-log.info "oxy initialized : #{Time.now.getutc}"
-
-if $env == :production
-  strat.run
-end
+run.start if $env == :production
 

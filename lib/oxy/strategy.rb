@@ -21,6 +21,14 @@ class Strategy
     @@log.info "defaultSize     : #{@@defaultSize}"
     @@log.info "priceThreshold  : #{@@priceThreshold}"
 
+    @exch.fetchAccounts
+
+    @startValue = @exch.value
+    @startMidpt = @exch.midpoint
+    @startUSD   = @exch.balance[:USD]
+    @startBTC   = @exch.balance[:BTC]
+
+    @@log.info "starting value $#{@startValue} exchange rate #{@startMidpt}"
     @@log.info 'strategy initialized'
   end
 
@@ -28,53 +36,15 @@ class Strategy
     @@takeRate
   end
 
-  def stop
-    @@run = false
-  end
-
-  def start
-    @@run = true
-    run
-  end
-
-  def run
-    @@log.info 'running strategy...'
-
-    @exch.fetchDepth
-    @exch.fetchAccounts
-    startValue = @exch.value
-    startMidpt = @exch.midpoint
-    startUSD   = @exch.balance[:USD]
-    startBTC   = @exch.balance[:BTC]
-
-    @@log.info "starting value $#{startValue} exchange rate #{startMidpt}"
-
-    while true
-      @exch.fetchAccounts
-      iteration
-
-      @@log.info "value $#{@exch.value} exchange rate #{@exch.midpoint}"
-      @@log.info "value delta: $#{@exch.value - startValue}"
-      @@log.info "rate delta : #{@exch.midpoint - startMidpt}"
-      @@log.info "USD delta  : #{@exch.balance[:USD] - startUSD}"
-      @@log.info "BTC delta  : #{@exch.balance[:BTC] - startBTC}"
-      @@log.info "sleeping for #{@@interval}s"
-
-      break unless @@run
-      sleep @@interval
-      break unless @@run
-      @@log.info 'awake, running strategy'
-    end
-
-    @@log.info 'exiting strategy'
+  def interval
+    @@interval
   end
 
   def iteration
-    @exch.fetchDepth
-
     fee = @exch.fee
     midpt = @exch.midpoint
 
+    @@log.error "no market depth" unless @exch.bid and @exch.ask
     @@log.error "bad fee: #{fee}" if !fee or fee < 0 or fee > 0.006
     @@log.error "bad midpt: #{midpt}" if !midpt or midpt < 4 or midpt > 20
 
@@ -94,7 +64,16 @@ class Strategy
       @@log.info "new order book level #{i} : bid #{bid.size} at #{bid.price}, ask #{ask.size} at #{ask.price}"
     end
 
+    @exch.fetchAccounts
     @exch.fetchOrders
     @exch.setOrders book, @@priceThreshold
+
+    @@log.info "value $#{@exch.value} exchange rate #{@exch.midpoint}"
+    @@log.info "value delta : $#{@exch.value - @startValue}"
+    @@log.info "rate delta  : #{@exch.midpoint - @startMidpt}"
+    @@log.info "USD delta   : #{@exch.balance[:USD] - @startUSD}"
+    @@log.info "BTC delta   : #{@exch.balance[:BTC] - @startBTC}"
+    @@log.info "sleeping for #{@@interval}s"
   end
+
 end

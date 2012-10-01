@@ -1,7 +1,7 @@
 require 'spec_helper'
-require 'oxy'
 require 'spec_common'
 require 'webmock/rspec'
+require 'oxy'
 
 describe MtGox do
 

@@ -10,6 +10,7 @@ class Stream
 
   def initialize address, schedule
     raise 'need scheduler' unless schedule.is_a? Scheduler
+    @@log.info "initializing stream with address #{address}"
     @address = address
     @schedule = schedule
   end

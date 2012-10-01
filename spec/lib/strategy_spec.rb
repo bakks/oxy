@@ -15,15 +15,15 @@ describe Strategy do
 
     exch = mock('MtGox')
     exch.stubs(:balance).returns({:USD => 100, :BTC => 100})
-    exch.stubs(:fetchDepth)
-    exch.stubs(:fetchOrders)
-    exch.stubs(:fetchAccounts)
-    exch.stubs(:value).returns(100)
-    exch.stubs(:midpoint).returns(10)
-    exch.stubs(:depth).returns(testBook)
-    exch.stubs(:fee).returns(0.006)
-    exch.stubs(:cancelAll)
-    exch.stubs(:midpoint).returns(10.5)
+    exch.stubs(:fetchDepth).once
+    exch.stubs(:fetchOrders).twice
+    exch.stubs(:fetchAccounts).twice
+    exch.stubs(:value).returns(100).twice
+    exch.stubs(:midpoint).returns(10).twice
+    exch.stubs(:depth).returns(testBook).once
+    exch.stubs(:fee).returns(0.006).once
+    exch.stubs(:cancelAll).once
+    exch.stubs(:midpoint).returns(10.5).once
 
     Strategy.stubs(:sleep)
 

@@ -59,12 +59,36 @@ class MtGox
     @@log.info 'initialized MtGox'
   end
 
+  def getToken
+    @agent = Mechanize.new
+    path = @domain + '/code/login.json'
+
+    t = Time.now
+    response = @agent.post(path,
+      {:username => @username, :password => @password})
+
+    status = response.code.to_i
+    Persistence::writeHttpRequest response.uri.to_s, t, status
+    @@log.error "login returned #{status}, exiting" unless status == 200
+
+    page = @agent.get(@domain)
+    @token = /var token = "(\w+)"/.match(page.body)[1]
+    raise 'no token found' unless @token
+
+    @@log.info 'token: ' + @token
+  end
+
   def bid
     @depth.bids[0]
   end
 
   def ask
     @depth.asks[0]
+  end
+
+  def start_stream scheduler
+    @stream = Stream.new MTGOX_STREAM, scheduler
+    @stream.start
   end
 
   def stream_trade msg
@@ -139,25 +163,6 @@ class MtGox
     else
       @@log.error "could not match message channel: #{chan}"
     end
-  end
-
-  def getToken
-    @agent = Mechanize.new
-    path = @domain + '/code/login.json'
-
-    t = Time.now
-    response = @agent.post(path,
-      {:username => @username, :password => @password})
-
-    status = response.code.to_i
-    Persistence::writeHttpRequest response.uri.to_s, t, status
-    @@log.error "login returned #{status}, exiting" unless status == 200
-
-    page = @agent.get(@domain)
-    @token = /var token = "(\w+)"/.match(page.body)[1]
-    raise 'no token found' unless @token
-
-    @@log.info 'token: ' + @token
   end
 
   def midpoint
