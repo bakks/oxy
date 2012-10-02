@@ -1,4 +1,5 @@
 require 'thread'
+require 'timeout'
 
 class Scheduler
   attr_reader :strategy
@@ -8,20 +9,29 @@ class Scheduler
     @strategy = strategy
     @exchange = exchange
     @queue = Queue.new
+    @stop = false
   end
 
   def start
-    pp 'start'
     @thread = Thread.new { run } unless @thread
   end
 
   def run
-    pp 'run'
     while true
-      pp 'here'
       return if @stop
 
-      x = @queue.pop
+      x = nil
+
+      while x == nil
+        begin
+          Timeout::timeout(1) do
+            x = @queue.pop
+          end
+        rescue Timeout::Error
+          return if @stop
+        end
+      end
+
       label = x[:label]
       msg = x[:msg]
 

@@ -12,6 +12,7 @@ describe Scheduler do
       msg.should == testmsg
     end
     exch.stubs(:balance).returns({:USD => 10, :BTC => 10}).twice
+    exch.stubs(:start_stream).once
     exch.stubs(:fetchOrders).once
     exch.stubs(:cancelAll).once
     exch.stubs(:fetchAccounts).once
@@ -25,9 +26,10 @@ describe Scheduler do
 
     scheduler.start
     scheduler.push :tick
-    scheduler.push :msg, testmsg
+    scheduler.push :stream, testmsg
     scheduler.push :tick
-    scheduler.push :msg, testmsg
+    scheduler.push :stream, testmsg
+    sleep 1
     scheduler.stop
     scheduler.join
   end

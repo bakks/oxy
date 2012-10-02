@@ -61,7 +61,7 @@ class Strategy
 
       book.add bid
       book.add ask
-      @@log.info "new order book level #{i} : bid #{bid.size} at #{bid.price}, ask #{ask.size} at #{ask.price}"
+      @@log.info "new order book level #{i} on midpt #{midpt} : bid #{bid.size} at #{bid.price}, ask #{ask.size} at #{ask.price}"
     end
 
     @exch.fetchAccounts
