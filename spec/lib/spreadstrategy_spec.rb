@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'oxy'
 require 'webmock/rspec'
 
-describe Strategy do
+describe SpreadStrategy do
 
   it 'should create and set orders' do
 
@@ -18,20 +18,20 @@ describe Strategy do
     exch.stubs(:bid).once.returns(10)
     exch.stubs(:ask).once.returns(11)
     exch.stubs(:fetchOrders).twice
-    exch.stubs(:fetchAccounts).twice
+    exch.stubs(:fetchAccounts)
     exch.stubs(:value).returns(100).times(3)
-    exch.stubs(:midpoint).returns(10.5).times(4)
-    exch.stubs(:fee).returns(0.006).once
+    exch.stubs(:midpoint).returns(10.5).times(5)
+    exch.stubs(:fee).returns(0.006).twice
     exch.stubs(:cancelAll).once
 
-    Strategy.stubs(:sleep)
+    SpreadStrategy.stubs(:sleep)
 
     MtGox.stubs(:new).returns(exch)
-    strat = Strategy.new(MtGox.new)
+    strat = SpreadStrategy.new(MtGox.new)
     takeRate = strat::takeRate
     takeRate.should be > 0
 
-    exch.stubs(:setOrders).with do |book|
+    exch.stubs(:setOrders).with do |book, threshold|
       book.bids.size.should == 1
       book.asks.size.should == 1
 
@@ -44,6 +44,8 @@ describe Strategy do
       bid.isBuy.should == false
       bid.size.should == 0.1
       bid.price.should == midpt + midpt * fee * (1 + takeRate)
+
+      threshold.should == 0.005
     end
 
     strat.iteration

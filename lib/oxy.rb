@@ -18,7 +18,8 @@ log.info "environment: #{$env}"
 require_relative 'oxy/common'
 require_relative 'oxy/book'
 require_relative 'oxy/mtgox'
-require_relative 'oxy/strategy'
+require_relative 'oxy/spreadstrategy'
+require_relative 'oxy/depthstrategy'
 require_relative 'oxy/persistence'
 require_relative 'oxy/stream'
 require_relative 'oxy/timer'
@@ -26,7 +27,7 @@ require_relative 'oxy/scheduler'
 
 def run
   mtgox = MtGox.new
-  strat = Strategy.new(mtgox)
+  strat = SpreadStrategy.new(mtgox)
   scheduler = Scheduler.new strat, mtgox
 
   timer = Timer.new strat.interval, scheduler

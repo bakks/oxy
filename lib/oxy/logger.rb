@@ -25,7 +25,7 @@ end
 $log = Logger.new(tee)
 
 $log.formatter = proc { |severity, stamp, prog, msg|
-  "#{severity.ljust(7)} #{stamp.getutc.strftime('%H:%M:%S.%L')} #{(prog or '').ljust(8)} | #{msg}\n"
+  "#{severity.ljust(7)} #{stamp.getutc.strftime('%H:%M:%S.%L')} #{(prog or '').ljust(9)[0..8]} | #{msg}\n"
 }
 
 class Log
