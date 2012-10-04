@@ -12,7 +12,7 @@ end
 require_relative 'oxy/logger'
 
 log = Log.new 'oxy'
-log.info 'starting oxy...'
+log.info "starting oxy at #{Time.now.getutc}..."
 log.info "environment: #{$env}"
 
 require_relative 'oxy/common'
@@ -39,5 +39,15 @@ def run
   return scheduler
 end
 
-run.start if $env == :production
+if $env == :production
+  scheduler = run
+  scheduler.start
 
+  begin
+    scheduler.join
+  rescue Interrupt
+    log.info 'caught interrupt'
+    scheduler.exchange.cancelAll
+    log.info 'exiting'
+  end
+end

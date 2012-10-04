@@ -1,7 +1,7 @@
 require 'mongo'
 
 class Persistence
-  @@log = Log.new('mtgox')
+  @@log = Log.new('persistence')
   @@quotes = 'quotes'
   @@trades = 'trades'
   @@requests = 'requests'
@@ -28,6 +28,7 @@ class Persistence
     }
 
     db[@@requests].insert(x)
+    @@log.debug "write http request #{x}"
   end
 
   def self.writeQuote quote
@@ -48,9 +49,11 @@ class Persistence
     }
 
     db[@@quotes].update(cond, x, :upsert => true)
+    @@log.debug "write quote #{x}"
   end
 
   def self.writeBook book
+    @@log.debug 'writing book'
     book.bids.each { |bid| writeQuote(bid) }
     book.asks.each { |ask| writeQuote(ask) }
   end
@@ -69,10 +72,12 @@ class Persistence
     }
 
     db[@@trades].update(cond, x, :upsert => true)
+    @@log.debug "write trade #{x}"
     return !db.get_last_error['updatedExisting']
   end
 
   def self.writeTrades trades
+    @@log.debug 'writing trades'
     trades.sort_by! { |x| x.timestamp }
     trades.reverse!
 

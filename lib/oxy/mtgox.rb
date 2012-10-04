@@ -92,6 +92,19 @@ class MtGox
     return @stream
   end
 
+  def msg msg
+    chan = msg['channel']
+
+    if chan == @channel_trades
+      stream_trade msg
+    elsif chan == @channel_depth
+      stream_depth msg
+    elsif chan == @channel_ticker
+    else
+      @@log.error "could not match message channel: #{chan}"
+    end
+  end
+
   def stream_trade msg
     trade = msg['trade']
     currency = trade['price_currency']
@@ -130,6 +143,9 @@ class MtGox
   end
 
   def stream_depth msg
+    lastBid = bid
+    lastAsk = ask
+
     d = msg['depth']
     currency = d['currency']
     return if currency != 'USD'
@@ -151,18 +167,9 @@ class MtGox
 
     Persistence::writeQuote q
     Persistence::writeQuote r if r
-  end
 
-  def msg msg
-    chan = msg['channel']
-
-    if chan == @channel_trades
-      stream_trade msg
-    elsif chan == @channel_depth
-      stream_depth msg
-    elsif chan == @channel_ticker
-    else
-      @@log.error "could not match message channel: #{chan}"
+    if (!lastBid or !lastAsk or lastBid.price != bid.price or lastAsk.price != ask.price) and bid and ask
+      @@log.info "level 1 changed to #{bid.price} x #{ask.price}"
     end
   end
 
@@ -177,14 +184,16 @@ class MtGox
   end
 
   def addOrder x, price = nil, size = nil
+    r = true
+
     if x.is_a? Quote
-      request @mtgox_add, {
+      r = request @mtgox_add, {
         :type => (x.isBuy ? 'bid' : 'ask'),
         :amount_int => x.size * 100000000,
         :price_int => x.price * 100000
       }
     elsif x.class == TrueClass or x.class == FalseClass
-      @@log.error 'invalid arguments to addOrder' unless price and size
+      r = @@log.error 'invalid arguments to addOrder' unless price and size
       request @mtgox_add, {
         :type => (x ? 'bid' : 'ask'),
         :amount_int => size * 100000000,
@@ -192,6 +201,11 @@ class MtGox
       }
     else
       @@log.error 'invalid arguments to addOrder'
+    end
+
+    unless r
+      @@log.error 'addOrder failed'
+      return
     end
   end
 
@@ -272,13 +286,18 @@ class MtGox
     Persistence::writeHttpRequest r.uri.to_s, t, r.code, response
 
     @@log.debug "post #{@mtgox_cancel} token=#{@token}&oid=#{order.extId}"
-    @@log.warn "got back #{r.code} from #{@mtgox_cancel}" unless r.code == 200
+    @@log.warn "got back #{r.code} from #{@mtgox_cancel}" unless r.code.to_i == 200
     @@log.warn "failed to cancel with error: #{response['error']}" if response['error']
   end
 
   def fetchAccounts
     @@log.info 'fetchAccounts'
     x = request @mtgox_info
+
+    unless x
+      @@log.error 'fetchAccounts failed'
+      return
+    end
 
     @fee = x['Trade_Fee'] * 0.01
 
@@ -301,6 +320,11 @@ class MtGox
   def fetchOrders
     @@log.info 'fetchOrders'
     x = request @mtgox_orders
+
+    unless x
+      @@log.error 'fetchOrders failed'
+      return
+    end
 
     @orders.clear
 
@@ -334,6 +358,11 @@ class MtGox
   def fetchTrades
     @@log.info 'fetchTrades'
     x = request @mtgox_trades
+
+    unless x
+      @@log.error 'fetchTrades failed'
+      return
+    end
 
     @trades = []
 
@@ -370,6 +399,12 @@ class MtGox
     end
 
     x = request @mtgox_depth
+
+    unless x
+      @@log.error 'fetchDepth failed'
+      return
+    end
+
     @depth.clear
 
     x['bids'].each do |x|
@@ -426,7 +461,8 @@ class MtGox
     response = @client.post(path, body, headers)
 
     unless response.status == 200
-      @@log.warn "got back #{response.status} from #{path}" 
+      @@log.warn "got back #{response.status} from #{path} body #{response.body}" 
+      return nil
     end
   
     r = JSON(response.body)
@@ -435,6 +471,7 @@ class MtGox
 
     if r['result'] != 'success' || !r['return']
       @@log.warn "no result from #{path} body: #{response.body}"
+      return nil
     end
     
     return r['return']
