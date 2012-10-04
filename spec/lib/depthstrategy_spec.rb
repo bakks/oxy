@@ -21,6 +21,7 @@ describe DepthStrategy do
     exch.stubs(:ask).once.returns(11)
     exch.stubs(:fetchOrders).twice
     exch.stubs(:fetchAccounts)
+    exch.stubs(:fetchDepth).once
     exch.stubs(:value).returns(100).times(3)
     exch.stubs(:midpoint).returns(10.5).times(5)
     exch.stubs(:fee).returns(0.006).twice
@@ -29,7 +30,7 @@ describe DepthStrategy do
     DepthStrategy.stubs(:sleep)
 
     MtGox.stubs(:new).returns(exch)
-    strat = DepthStrategy.new(MtGox.new)
+    strat = DepthStrategy.new(exch)
 
     exch.stubs(:setOrders).with do |book, threshold|
       book.bids.size.should == 1
@@ -66,6 +67,7 @@ describe DepthStrategy do
     exch.stubs(:ask).returns(11)
     exch.stubs(:fetchOrders)
     exch.stubs(:fetchAccounts)
+    exch.stubs(:fetchDepth).once
     exch.stubs(:value).returns(100)
     exch.stubs(:midpoint).returns(10.5)
     exch.stubs(:fee).returns(0.006)

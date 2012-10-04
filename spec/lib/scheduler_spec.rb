@@ -14,6 +14,7 @@ describe Scheduler do
     exch.stubs(:balance).returns({:USD => 10, :BTC => 10})
     exch.stubs(:start_stream)
     exch.stubs(:fetchOrders)
+    exch.stubs(:fetchDepth)
     exch.stubs(:cancelAll).once
     exch.stubs(:fetchAccounts)
     exch.stubs(:value).returns(100)

@@ -171,7 +171,6 @@ describe MtGox do
   end
 
   it 'should persist streaming depth' do
-    Persistence::db['quotes'].drop
     stream = asset('mtgox/stream_depth.json')
     stream = JSON(stream)
 
