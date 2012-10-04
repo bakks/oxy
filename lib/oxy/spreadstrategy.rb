@@ -2,7 +2,7 @@ require_relative 'strategy'
 
 class SpreadStrategy < Strategy
   @@interval          = 15
-  @@takeRate          = 0.2
+  @@takeRate          = 0.1
   @@takeIncrement     = 0.2
   @@levels            = 1
   @@defaultSize       = 0.1
