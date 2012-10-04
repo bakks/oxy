@@ -89,6 +89,7 @@ class MtGox
   def start_stream scheduler
     @stream = Stream.new MTGOX_STREAM, scheduler
     @stream.start
+    return @stream
   end
 
   def stream_trade msg

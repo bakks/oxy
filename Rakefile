@@ -31,13 +31,13 @@ end
 task :stream do
   require_relative 'lib/oxy'
   
-  class Scheduler
+  class Sched
     def push label, msg
       puts msg
     end
   end
 
-  stream = Stream.new(MTGOX_STREAM, Scheduler.new)
+  stream = Stream.new(MTGOX_STREAM, Sched.new)
   stream.run
 end
 

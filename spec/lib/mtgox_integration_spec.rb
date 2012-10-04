@@ -8,6 +8,19 @@ describe MtGox do
     @mtgox = MtGox.new
   end
 
+  it 'should stream quotes', :integration => true do
+    scheduler = mock('Scheduler')
+    scheduler.stubs(:push).at_least(2).with do |label, msg|
+      label.should == :stream
+      msg.size.should be > 2
+      pp msg
+    end
+
+    stream = @mtgox.start_stream scheduler
+    sleep 10
+    stream.stop
+  end
+
   it 'should fetch accounts', :integration => true do
     @mtgox.fetchAccounts
     verifyAccounts @mtgox
@@ -42,7 +55,12 @@ describe MtGox do
     @mtgox.orders.asks[0].size.should == size
 
     @mtgox.cancelAll
+
+    sleep 0.5
+
     @mtgox.fetchOrders
+
+    sleep 0.5
 
     @mtgox.orders.bids.size.should == 0
     @mtgox.orders.asks.size.should == 0

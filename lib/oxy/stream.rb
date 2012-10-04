@@ -9,7 +9,6 @@ class Stream
   @@log = Log.new(@@label.to_s)
 
   def initialize address, schedule
-    raise 'need scheduler' unless schedule.is_a? Scheduler
     @@log.info "initializing stream with address #{address}"
     @address = address
     @schedule = schedule
@@ -37,7 +36,7 @@ class Stream
         begin
           @schedule.push @@label, JSON(msg)
         rescue Exception => e
-          @@log.error "problem pushing msg to schedule: #{msg}"
+          @@log.error "problem pushing msg to schedule: #{msg}, #{e}"
         end
       end
 
@@ -50,6 +49,10 @@ class Stream
 
   def join
     @thread.join
+  end
+
+  def stop
+    @thread.exit
   end
 end
 
