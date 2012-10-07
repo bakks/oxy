@@ -31,18 +31,26 @@ describe MtGox do
     @mtgox.fetchOrders
     @mtgox.orders.bids.size.should == 1
     @mtgox.orders.bids[0].price.should == 10
+    @mtgox.orders.add Quote.new(true, 10.5, 0.1)
+    @mtgox.orders.bids.size.should == 2
+    @mtgox.orders.add Quote.new(false, 20, 0.1)
 
     book = Book.new
-    book.add Quote.new(true, 10.04, 0.1)
-    book.add Quote.new(true, 10.01, 0.1)
     book.add Quote.new(true, 10.5, 0.1)
+    book.add Quote.new(true, 10.49, 0.1)
+    book.add Quote.new(true, 10.006, 0.1)
+    book.add Quote.new(true, 10.005, 0.1)
 
-    book.add Quote.new(false, 12.01, 0.1)
+    book.add Quote.new(false, 12.001, 0.1)
     book.add Quote.new(false, 14, 0.1)
 
-    @mtgox.expects(:cancelOrder).never
+    @mtgox.expects(:cancelOrder).once.with do |o|
+      o.isBuy == false and o.price == 20
+    end
     @mtgox.expects(:addOrder).times(3)
-        .with { |o| (o.isBuy && (o.price == 10.5 || o.price == 10.01)) || (!o.isBuy && o.price == 14) }
+        .with do |o|
+          (o.isBuy && (o.price == 10.49 || o.price == 10.006)) || (!o.isBuy && o.price == 14)
+        end
 
     @mtgox.setOrders book, 0.005
   end

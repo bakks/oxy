@@ -5,7 +5,7 @@ class SpreadStrategy < Strategy
   @@takeRate          = 0.1
   @@takeIncrement     = 0.2
   @@levels            = 1
-  @@defaultSize       = 0.1
+  @@defaultSize       = 1
   @@priceThreshold    = 0.005
 
   def initialize exchange
@@ -30,6 +30,10 @@ class SpreadStrategy < Strategy
 
   def priceThreshold
     @@priceThreshold
+  end
+
+  def defaultSize
+    @@defaultSize
   end
 
   def setOrders book

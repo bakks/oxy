@@ -28,6 +28,9 @@ class MtGox
     @password   = MTGOX_PASSWORD
     @domain     = MTGOX_DOMAIN
 
+    @stream_exit_timeout      = 300
+    @stream_restart_timeout   = 120
+
     @@log.info "domain: #{@domain}"
     @@log.info "username: #{@username}"
 
@@ -36,6 +39,7 @@ class MtGox
     @mtgox_depth      = '/api/1/BTCUSD/depth'
     @mtgox_fulldepth  = '/api/1/BTCUSD/fulldepth'
     @mtgox_trades     = '/api/1/BTCUSD/trades'
+    @mtgox_login      = '/code/login.json'
     @mtgox_cancel     = '/code/cancelOrder.php'
     @mtgox_add        = '/api/1/BTCUSD/private/order/add'
 
@@ -47,21 +51,35 @@ class MtGox
 
     @client = Faraday.new(:url => @domain) do |faraday|
       faraday.request  :url_encoded
+      faraday.use Faraday::Request::Retry
       faraday.adapter  Faraday.default_adapter
     end
 
-    @depth      = Book.new
-    @orders     = Book.new
-    @trades     = []
-    @fee        = nil
-    @balance    = {}
+    @depth            = Book.new
+    @orders           = Book.new
+    @trades           = []
+    @fee              = nil
+    @balance          = {}
+    @stream_timestamp = Time.now.getutc
 
     @@log.info 'initialized MtGox'
   end
 
+  def check
+    if Time.now.getutc - @stream_timestamp > @stream_exit_timeout
+      @@log.fatal "no streaming data for over #{@stream_exit_timeout}s"
+    elsif Time.now.getutc - @stream_timestamp > @stream_timeout
+      @@log.warn "no streaming data for over #{@stream_restart_timeout}s, restarting..."
+      @stream.stop
+      start_stream @scheduler
+    else
+      @@log.info 'checks passed'
+    end
+  end
+
   def getToken
     @agent = Mechanize.new
-    path = @domain + '/code/login.json'
+    path = @domain + @mtgox_login
 
     t = Time.now
     response = @agent.post(path,
@@ -87,12 +105,14 @@ class MtGox
   end
 
   def start_stream scheduler
-    @stream = Stream.new MTGOX_STREAM, scheduler
+    @scheduler = scheduler
+    @stream = Stream.new MTGOX_STREAM, @scheduler
     @stream.start
     return @stream
   end
 
   def msg msg
+    @stream_timestamp = Time.now.getutc
     chan = msg['channel']
 
     if chan == @channel_trades
@@ -221,11 +241,11 @@ class MtGox
       while orders.bids.size > 0 and i < orders.bids.length
         oldBid = orders.bids[i]
 
-        if oldBid.price > bid.price * (1 + threshold)
+        if oldBid.price > bid.price + threshold
           cancelOrder oldBid
           orders.removeBid i
           next
-        elsif oldBid.price > bid.price * (1 - threshold)
+        elsif oldBid.price >= bid.price - threshold
           i += 1
           flag = true
           break
@@ -236,6 +256,11 @@ class MtGox
       newOrders << bid unless flag
     end
 
+    while i < orders.bids.length
+      cancelOrder orders.bids[i]
+      orders.removeBid i
+    end
+
     i = 0
     newBook.asks.each do |ask|
       flag = false
@@ -243,11 +268,11 @@ class MtGox
       while orders.asks.size > 0 and i < orders.asks.length
         oldAsk = orders.asks[i]
 
-        if oldAsk.price < ask.price * (1 - threshold)
+        if oldAsk.price < ask.price - threshold
           cancelOrder oldAsk
           orders.removeAsk i
           next
-        elsif oldAsk.price < ask.price * (1 + threshold)
+        elsif oldAsk.price <= ask.price + threshold
           i += 1
           flag = true
           break
@@ -256,6 +281,11 @@ class MtGox
       end
 
       newOrders << ask unless flag
+    end
+
+    while i < orders.asks.length
+      cancelOrder orders.asks[i]
+      orders.removeAsk i
     end
 
     newOrders.each { |o| addOrder(o) }
@@ -267,7 +297,7 @@ class MtGox
     @orders.asks.each { |o| cancelOrder(o) }
   end
 
-  def cancelOrder order
+  def cancelOrder order, tryagain = true
     @@log.error 'order must be a Quote' unless order.is_a? Quote
     unless order.extId != nil and order.extId != ""
       @@log.error 'order has no external id' 
@@ -288,6 +318,11 @@ class MtGox
     @@log.debug "post #{@mtgox_cancel} token=#{@token}&oid=#{order.extId}"
     @@log.warn "got back #{r.code} from #{@mtgox_cancel}" unless r.code.to_i == 200
     @@log.warn "failed to cancel with error: #{response['error']}" if response['error']
+
+    if response['error'] == 'Must be logged in' and tryagain
+      getToken
+      cancelOrder order, false
+    end
   end
 
   def fetchAccounts

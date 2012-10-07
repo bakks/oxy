@@ -40,6 +40,7 @@ class Scheduler
       if label == :stream
         @exchange.msg msg
       elsif label == :tick
+        @exchange.check
         @strategy.iteration
       end
     end
