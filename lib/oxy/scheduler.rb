@@ -2,10 +2,12 @@ require 'thread'
 require 'timeout'
 
 class Scheduler
+  @@log = Log.new 'scheduler'
   attr_reader :strategy
   attr_reader :exchange
 
   def initialize strategy, exchange
+    @@log.info 'initializing scheduler'
     @strategy = strategy
     @exchange = exchange
     @queue = Queue.new
@@ -13,6 +15,7 @@ class Scheduler
   end
 
   def start
+    @@log.info 'starting scheduler'
     @thread = Thread.new { run } unless @thread
   end
 
@@ -25,6 +28,7 @@ class Scheduler
       while x == nil
         begin
           Timeout::timeout(1) do
+            @@log.debug "queue size: #{@queue.size}"
             x = @queue.pop
           end
         rescue Timeout::Error
@@ -38,9 +42,12 @@ class Scheduler
       return if @stop
 
       if label == :stream
+        @@log.debug 'sending msg to exchange.msg'
         @exchange.msg msg
       elsif label == :tick
+        @@log.debug 'running exchange check'
         @exchange.check
+        @@log.debug 'running exchange iteration'
         @strategy.iteration
       end
     end

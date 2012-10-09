@@ -15,8 +15,8 @@ describe SpreadStrategy do
 
     exch = mock('MtGox')
     exch.stubs(:balance).returns({:USD => 100, :BTC => 100})
-    exch.stubs(:bid).once.returns(10)
-    exch.stubs(:ask).once.returns(11)
+    exch.stubs(:bid).twice.returns(10)
+    exch.stubs(:ask).twice.returns(11)
     exch.stubs(:fetchOrders).twice
     exch.stubs(:fetchAccounts)
     exch.stubs(:fetchDepth)

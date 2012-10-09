@@ -7,8 +7,6 @@ class Quote
   attr_reader :extId
 
   def initialize isBuy = nil, price = nil, size = nil, start = nil, finish = nil, extId = nil
-    raise "bad size: #{size}" unless size > 0
-
     @isBuy = isBuy
     @price = price
     @size = size

@@ -94,7 +94,6 @@ describe Book do
 
     book.bids.each do |bid|
       bid.size.should == 1
-      puts bid.price
       bid.price.should == last - 1
       last = bid.price
       bid.isBuy.should == true

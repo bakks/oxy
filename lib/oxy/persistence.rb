@@ -19,6 +19,19 @@ class Persistence
     $mongodb
   end
 
+  def self.check
+    @@log.info "ensure #{@@quotes} index"
+    db[@@quotes].ensure_index([
+      [:is_buy, 1],
+      [:price, 1],
+      [:size, 1],
+      [:start, 1]
+    ])
+
+    @@log.info "ensure #{@@trades} index"
+    db[@@trades].ensure_index([[:ext_id, 1]])
+  end
+
   def self.writeHttpRequest path, timestamp, status, document = nil
     x = {
       :path => path,
@@ -28,7 +41,7 @@ class Persistence
     }
 
     db[@@requests].insert(x)
-    @@log.debug "write http request #{x}"
+    #@@log.debug "write http request #{x}"
   end
 
   def self.writeQuote quote
@@ -49,7 +62,7 @@ class Persistence
     }
 
     db[@@quotes].update(cond, x, :upsert => true)
-    @@log.debug "write quote #{x}"
+    #@@log.debug "write quote #{x}"
   end
 
   def self.writeBook book

@@ -26,14 +26,27 @@ require_relative 'oxy/timer'
 require_relative 'oxy/scheduler'
 
 def run
+  log = Log.new 'oxy'
+  log.info 'starting oxy run'
+
+  log.info 'checking persistence'
+  Persistence::check
+
   mtgox = MtGox.new
+  log.info 'initialized mtgox'
+
   strat = SpreadStrategy.new(mtgox)
+  log.info 'initialized strategy'
+
   scheduler = Scheduler.new strat, mtgox
+  log.info 'initialized scheduler'
 
   timer = Timer.new strat.interval, scheduler
-  mtgox.start_stream scheduler
+  log.info 'initialized timer'
 
-  log = Log.new 'oxy'
+  mtgox.start_stream scheduler
+  log.info 'started stream'
+
   log.info "oxy initialized : #{Time.now.getutc}"
 
   return scheduler
@@ -42,6 +55,7 @@ end
 if $env == :production
   scheduler = run
   scheduler.start
+  log.info 'started scheduler, joining thread'
 
   begin
     scheduler.join

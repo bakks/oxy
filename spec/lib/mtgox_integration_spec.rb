@@ -54,13 +54,17 @@ describe MtGox do
     @mtgox.orders.asks[0].price.should == askPrice
     @mtgox.orders.asks[0].size.should == size
 
-    @mtgox.cancelAll
+    tries = 0
 
-    sleep 0.5
+    while tries < 4
+      @mtgox.cancelAll
 
-    @mtgox.fetchOrders
+      sleep 1
 
-    sleep 0.5
+      @mtgox.fetchOrders
+
+      tries += 1
+    end
 
     @mtgox.orders.bids.size.should == 0
     @mtgox.orders.asks.size.should == 0

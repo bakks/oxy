@@ -73,7 +73,7 @@ class MtGox
       @stream.stop
       start_stream @scheduler
     else
-      @@log.info 'checks passed'
+      @@log.info "checks passed, last stream at #{@stream_timestamp}"
     end
   end
 
@@ -97,11 +97,11 @@ class MtGox
   end
 
   def bid
-    @depth.bids[0]
+    @bid or (@depth.bids[0] and @depth.bids[0].price) or nil
   end
 
   def ask
-    @depth.asks[0]
+    @ask or (@depth.asks[0] and @depth.asks[0].price) or nil
   end
 
   def start_stream scheduler
@@ -120,10 +120,22 @@ class MtGox
     elsif chan == @channel_depth
       stream_depth msg
     elsif chan == @channel_ticker
+      stream_ticker msg
     else
       @@log.error "could not match message channel: #{chan}"
     end
   end
+
+  def stream_ticker msg
+    b = msg['ticker']['buy']['value']
+    @bid = b.to_f
+    a = msg['ticker']['sell']['value']
+    @ask = a.to_f
+
+    depthBid = @depth.bids[0] ? @depth.bids[0].price : nil
+    depthAsk = @depth.asks[0] ? @depth.asks[0].price : nil
+    @@log.info "received ticker #{b} x #{a} depth #{depthBid} x #{depthAsk}"
+  end 
 
   def stream_trade msg
     trade = msg['trade']
@@ -185,14 +197,14 @@ class MtGox
     q = Quote.new isBuy, price, size, start
     @depth.set q
 
-    if (!lastBid or !lastAsk or lastBid.price != bid.price or lastAsk.price != ask.price) and bid and ask
-      @@log.info "level 1 changed to #{bid.price} x #{ask.price}"
+    if (!lastBid or !lastAsk or lastBid != bid or lastAsk != ask)
+      @@log.info "level 1 changed to #{bid} x #{ask}"
     end
   end
 
   def midpoint
-    return nil if depth.bids.size == 0 or depth.asks.size == 0
-    return (depth.bids[0].price + depth.asks[0].price) / 2
+    return nil unless bid and ask
+    return (bid + ask) / 2
   end
 
   def value

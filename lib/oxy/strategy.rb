@@ -26,6 +26,7 @@ class Strategy
     @@log.fatal "no market depth" unless @exch.bid and @exch.ask
     @@log.fatal "bad fee: #{fee}" if !fee or fee < 0 or fee > 0.006
     @@log.fatal "bad midpt: #{midpt}" if !midpt or midpt < 4 or midpt > 20
+    @@log.fatal "bad spread: #{@exch.bid} x #{@exch.ask}" if @exch.bid >= @exch.ask
 
     book = Book.new
     book = setOrders book
