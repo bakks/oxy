@@ -10,8 +10,8 @@ describe SpreadStrategy do
     midpt = 10.5
 
     testBook = Book.new
-    testBook.add Quote.new(true, 10, 1)
-    testBook.add Quote.new(false, 11, 1)
+    testBook.set Quote.new(true, 10, 1)
+    testBook.set Quote.new(false, 11, 1)
 
     exch = mock('MtGox')
     exch.stubs(:balance).returns({:USD => 100, :BTC => 100})

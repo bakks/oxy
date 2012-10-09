@@ -10,8 +10,8 @@ describe Book do
 
     book = Book.new
 
-    book.add(q1).should == nil
-    x = book.add(q2)
+    book.set(q1).should == nil
+    x = book.set(q2)
 
     book.bids.size.should == 1
     book.bids[0].size.should == 3
@@ -26,8 +26,8 @@ describe Book do
 
     book = Book.new
 
-    book.add(q1)
-    book.add(q2)
+    book.set(q1)
+    book.set(q2)
 
     book.asks.size.should == 1
     book.asks[0].size.should == 3
@@ -40,10 +40,10 @@ describe Book do
     q2 = Quote.new(true, 5, 0, t2)
 
     book = Book.new
+    book.set(q1)
 
-    book.add(q1).should == nil
-    x = book.add(q2)
-
+    x = book.set(q2)
+    book.findBid(5).should == nil
     book.bids.size.should == 0
 
     x.isBuy.should == true
@@ -60,10 +60,10 @@ describe Book do
     q2 = Quote.new(false, 5, 0, t2)
 
     book = Book.new
+    book.set(q1)
 
-    book.add(q1).should == nil
-    x = book.add(q2)
-
+    x = book.set(q2)
+    book.findAsk(5).should == nil
     book.asks.size.should == 0
 
     x.isBuy.should == false
@@ -82,11 +82,11 @@ describe Book do
 
     book = Book.new
 
-    book.add(q2)
-    book.add(q5)
-    book.add(q1)
-    book.add(q3)
-    book.add(q4)
+    book.set(q2)
+    book.set(q5)
+    book.set(q1)
+    book.set(q3)
+    book.set(q4)
 
     last = 6
 
@@ -94,6 +94,7 @@ describe Book do
 
     book.bids.each do |bid|
       bid.size.should == 1
+      puts bid.price
       bid.price.should == last - 1
       last = bid.price
       bid.isBuy.should == true
@@ -109,11 +110,11 @@ describe Book do
 
     book = Book.new
 
-    book.add(q2)
-    book.add(q5)
-    book.add(q1)
-    book.add(q3)
-    book.add(q4)
+    book.set(q2)
+    book.set(q5)
+    book.set(q1)
+    book.set(q3)
+    book.set(q4)
 
     last = 0
 
@@ -136,11 +137,11 @@ describe Book do
 
     book = Book.new
 
-    book.add(q2)
-    book.add(q5)
-    book.add(q1)
-    book.add(q3)
-    book.add(q4)
+    book.set(q2)
+    book.set(q5)
+    book.set(q1)
+    book.set(q3)
+    book.set(q4)
 
     book.bids.size.should == 5
     book.remove q2

@@ -1,4 +1,5 @@
 class Book
+  @@log = Log.new 'book'
 
   def initialize
     @bids = []
@@ -10,51 +11,90 @@ class Book
     @asks = []
   end
 
-  def add(quote)
+  def findBid price
+    i = searchBids price
+    return @bids[i] if @bids[i] and @bids[i].price == price
+    return nil
+  end
+
+  def findAsk price
+    i = searchAsks price
+    return @asks[i] if @asks[i] and @asks[i].price == price
+    return nil
+  end
+
+  def searchAsks price
+    return 0 if @asks.size == 0
+    return (@asks[0].price < price ? 1 : 0) if @asks.size == 1
+
+    start = 0
+    finish = @asks.size
+    i = 0
+
+    while finish > start + 1
+      i = start + (finish - start) / 2
+      
+      start = i if @asks[i].price <= price
+      finish = i if @asks[i].price >= price
+      return i if start == finish
+    end
+
+    return start + 1 unless @asks[start].price > price
+    return start
+  end
+
+  def searchBids price
+    return 0 if @bids.size == 0
+    return (@bids[0].price > price ? 1 : 0) if @bids.size == 1
+
+    start = 0
+    finish = @bids.size
+    i = 0
+
+    while finish > start + 1
+      i = start + (finish - start) / 2
+      
+      start = i if @bids[i].price >= price
+      finish = i if @bids[i].price <= price
+      return i if start == finish
+    end
+
+    return start + 1 unless @bids[start].price < price
+    return start
+  end
+
+  def set(quote)
     raise 'nil quote' unless quote
     raise 'must be Quote' unless quote.is_a? Quote
 
-    if quote.isBuy
-      for i in 0..(@bids.size - 1)
-        if quote.price == @bids[i].price
-          x = @bids[i]
-          x.finish = quote.start
+    arr = quote.isBuy ? @bids : @asks
+    side = quote.isBuy ? 'buy' : 'sell'
+    i = quote.isBuy ? searchBids(quote.price) : searchAsks(quote.price)
 
-          if quote.size == 0
-            @bids.delete_at(i)
-          else
-            @bids[i] = quote
-          end
+    if i >= 0 and arr[i] and quote.price == arr[i].price
+      x = arr[i]
+      x.finish = quote.start
 
-          return x
-        elsif quote.price > @bids[i].price
-          @bids.insert(i, quote)
-          return nil
-        end
+      if quote.size == 0
+        @@log.debug "deleting #{side} #{arr[i].size} at #{arr[i].price}"
+        arr.delete_at(i)
+      elsif quote.size < 0
+        @@log.debug "subtracting #{quote.size} from #{arr[i].size}"
+        quote = Quote.new(quote.isBuy, x.size + quote.size, quote.price, quote.start, quote.finish, quote.extId)
+        Persistence::writeQuote quote if quote.size > 0
+      else
+        arr[i] = quote
+        Persistence::writeQuote quote
       end
-      @bids << quote
-    else
-      for i in 0..(@asks.size - 1)
-        if quote.price == @asks[i].price
-          x = @asks[i]
-          x.finish = quote.start
 
-          if quote.size == 0
-            @asks.delete_at(i)
-          else
-            @asks[i] = quote
-          end
-
-          return x
-        elsif quote.price < @asks[i].price
-          @asks.insert(i, quote)
-          return nil
-        end
-      end
-      @asks << quote
+      raise "quote size #{x.size}  #{x}  #{quote}" if x.size <= 0
+      Persistence::writeQuote x
+      return x
+    elsif quote.size > 0
+      arr.insert(i, quote)
+      Persistence::writeQuote quote
+      return nil
     end
-
-    nil
   end
 
   def bids

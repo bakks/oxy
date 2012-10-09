@@ -63,8 +63,8 @@ describe Persistence do
     ask = Quote.new(false, 10, 10, t2)
 
     book = Book.new
-    book.add bid
-    book.add ask
+    book.set bid
+    book.set ask
 
     Persistence::writeBook book
 

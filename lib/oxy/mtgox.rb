@@ -68,7 +68,7 @@ class MtGox
   def check
     if Time.now.getutc - @stream_timestamp > @stream_exit_timeout
       @@log.fatal "no streaming data for over #{@stream_exit_timeout}s"
-    elsif Time.now.getutc - @stream_timestamp > @stream_timeout
+    elsif Time.now.getutc - @stream_timestamp > @stream_restart_timeout
       @@log.warn "no streaming data for over #{@stream_restart_timeout}s, restarting..."
       @stream.stop
       start_stream @scheduler
@@ -183,10 +183,7 @@ class MtGox
     start = Time.at(sec, nsec).getutc
 
     q = Quote.new isBuy, price, size, start
-    r = @depth.add q
-
-    Persistence::writeQuote q
-    Persistence::writeQuote r if r
+    @depth.set q
 
     if (!lastBid or !lastAsk or lastBid.price != bid.price or lastAsk.price != ask.price) and bid and ask
       @@log.info "level 1 changed to #{bid.price} x #{ask.price}"
@@ -380,7 +377,7 @@ class MtGox
       extId = o['oid']
 
       order = Quote.new(isBuy, price, size, start, nil, extId)
-      @orders.add order
+      @orders.set order
 
       @@log.info "found order #{type} #{size} at #{price}, #{start.iso8601}, #{extId}"
       bids += 1 if isBuy
@@ -452,7 +449,7 @@ class MtGox
       timestamp = Time.at(sec, nsec).getutc
 
       quote = Quote.new isBuy, price, size, timestamp
-      @depth.add quote
+      @depth.set quote
     end
 
     x['asks'].each do |x|
@@ -465,7 +462,7 @@ class MtGox
       timestamp = Time.at(sec, nsec).getutc
 
       quote = Quote.new isBuy, price, size, timestamp
-      @depth.add quote
+      @depth.set quote
     end
 
     Persistence::writeBook @depth

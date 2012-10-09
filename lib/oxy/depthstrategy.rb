@@ -70,8 +70,8 @@ class DepthStrategy < Strategy
     bid = Quote.new true, bidPrice, @@defaultSize
     ask = Quote.new false, askPrice, @@defaultSize
 
-    book.add bid
-    book.add ask
+    book.set bid
+    book.set ask
     
     @log.info "new order book level on midpt #{@exch.midpoint} : bid #{bid.size} at #{bid.price}, ask #{ask.size} at #{ask.price}"
 

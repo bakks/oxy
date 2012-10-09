@@ -31,18 +31,18 @@ describe MtGox do
     @mtgox.fetchOrders
     @mtgox.orders.bids.size.should == 1
     @mtgox.orders.bids[0].price.should == 10
-    @mtgox.orders.add Quote.new(true, 10.5, 0.1)
+    @mtgox.orders.set Quote.new(true, 10.5, 0.1)
     @mtgox.orders.bids.size.should == 2
-    @mtgox.orders.add Quote.new(false, 20, 0.1)
+    @mtgox.orders.set Quote.new(false, 20, 0.1)
 
     book = Book.new
-    book.add Quote.new(true, 10.5, 0.1)
-    book.add Quote.new(true, 10.49, 0.1)
-    book.add Quote.new(true, 10.006, 0.1)
-    book.add Quote.new(true, 10.005, 0.1)
+    book.set Quote.new(true, 10.5, 0.1)
+    book.set Quote.new(true, 10.49, 0.1)
+    book.set Quote.new(true, 10.006, 0.1)
+    book.set Quote.new(true, 10.005, 0.1)
 
-    book.add Quote.new(false, 12.001, 0.1)
-    book.add Quote.new(false, 14, 0.1)
+    book.set Quote.new(false, 12.001, 0.1)
+    book.set Quote.new(false, 14, 0.1)
 
     @mtgox.expects(:cancelOrder).once.with do |o|
       o.isBuy == false and o.price == 20
@@ -179,7 +179,6 @@ describe MtGox do
   end
 
   it 'should persist streaming depth' do
-    Persistence::db['quotes'].drop
     stream = asset('mtgox/stream_depth.json')
     stream = JSON(stream)
 

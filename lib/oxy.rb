@@ -31,7 +31,7 @@ def run
   scheduler = Scheduler.new strat, mtgox
 
   timer = Timer.new strat.interval, scheduler
-  mtgox.start_stream
+  mtgox.start_stream scheduler
 
   log = Log.new 'oxy'
   log.info "oxy initialized : #{Time.now.getutc}"

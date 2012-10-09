@@ -49,8 +49,8 @@ class SpreadStrategy < Strategy
       bid = Quote.new true, bidPrice, @@defaultSize
       ask = Quote.new false, askPrice, @@defaultSize
 
-      book.add bid
-      book.add ask
+      book.set bid
+      book.set ask
       @log.info "new order book level #{i} on midpt #{midpt} : bid #{bid.size} at #{bid.price}, ask #{ask.size} at #{ask.price}"
     end
 
