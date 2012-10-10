@@ -63,5 +63,9 @@ if $env == :production
     log.info 'caught interrupt'
     scheduler.exchange.cancelAll
     log.info 'exiting'
+  rescue Exception => e
+    log.info "caught exception: #{e}"
+    scheduler.exchange.cancelAll
+    log.info 'exiting'
   end
 end

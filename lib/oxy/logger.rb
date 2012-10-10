@@ -48,7 +48,7 @@ class Log
 
   def fatal msg
     $log.fatal(@prog) { msg }
-    exit
+    raise msg
   end
 
   def debug msg
