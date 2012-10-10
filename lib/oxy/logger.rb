@@ -22,10 +22,10 @@ else
   tee = STDOUT
 end
 
-$log = Logger.new(tee)
-$log.level = Logger::INFO
+$_log = Logger.new(tee)
+$_log.level = Logger::INFO
 
-$log.formatter = proc { |severity, stamp, prog, msg|
+$_log.formatter = proc { |severity, stamp, prog, msg|
   "#{severity.ljust(7)} #{stamp.getutc.strftime('%H:%M:%S.%L')} #{(prog or '').ljust(12)[0..11]} | #{msg}\n"
 }
 
@@ -35,24 +35,24 @@ class Log
   end
 
   def info msg
-    $log.info(@prog) { msg }
+    $_log.info(@prog) { msg }
   end
 
   def warn msg
-    $log.warn(@prog) { msg }
+    $_log.warn(@prog) { msg }
   end
 
   def error msg
-    $log.error(@prog) { msg }
+    $_log.error(@prog) { msg }
   end
 
   def fatal msg
-    $log.fatal(@prog) { msg }
+    $_log.fatal(@prog) { msg }
     raise msg
   end
 
   def debug msg
-    $log.debug(@prog) { msg }
+    $_log.debug(@prog) { msg }
   end
 end
 

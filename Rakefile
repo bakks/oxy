@@ -25,7 +25,13 @@ end
 task :run do
   Dir.chdir 'lib'
   ENV['OXY_ENVIRONMENT'] = 'production'
+
   require './oxy'
+
+  while true
+    run
+    sleep 10
+  end
 end
 
 task :stream do
