@@ -30,7 +30,7 @@ task :run do
 
   while true
     run
-    sleep 10
+    sleep 60
   end
 end
 

@@ -25,7 +25,7 @@ require_relative 'oxy/stream'
 require_relative 'oxy/timer'
 require_relative 'oxy/scheduler'
 
-def initialize
+def init
   $log.info 'starting oxy run'
 
   $log.info 'checking persistence'
@@ -52,7 +52,7 @@ def initialize
 end
 
 def run
-  scheduler = initialize
+  scheduler = init
   scheduler.start
   $log.info 'started scheduler, joining thread'
   scheduler.join

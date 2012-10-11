@@ -5,7 +5,7 @@ class SpreadStrategy < Strategy
   @@takeRate          = 0.1
   @@takeIncrement     = 0.2
   @@levels            = 1
-  @@defaultSize       = 1
+  @@defaultSize       = 5
   @@priceThreshold    = 0.005
 
   def initialize exchange
