@@ -22,7 +22,7 @@ describe Scheduler do
     exch.stubs(:check).twice
     MtGox.stubs(:new).returns(exch)
 
-    scheduler = run
+    scheduler = init
 
     scheduler.strategy.stubs(:iteration).times(2)
 

@@ -61,6 +61,7 @@ def run
     $log.info 'caught interrupt'
     scheduler.exchange.cancelAll
     $log.info 'exiting'
+    exit
 
   rescue Exception => e
     $log.info "caught exception: #{e}"

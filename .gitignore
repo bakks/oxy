@@ -1,3 +1,4 @@
 *.swp
 apioutput
 logs/*
+logs.old/*

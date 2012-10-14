@@ -14,6 +14,7 @@ class MtGox
   @@log = Log.new('mtgox')
   attr_reader :fee
   attr_reader :balance
+  attr_reader :monthlyVolume
   attr_reader :orders
   attr_reader :trades
   attr_reader :depth
@@ -344,6 +345,7 @@ class MtGox
     end
 
     @fee = x['Trade_Fee'] * 0.01
+    @monthlyVolume = x['Monthly_Volume']['value'].to_f
 
     s = ''
 
@@ -359,6 +361,8 @@ class MtGox
       value = @balance[:BTC] * midpoint + @balance[:USD]
       @@log.info "info: value $#{value}"
     end
+
+    @@log.info "monthly volume: #{@monthlyVolume}"
   end
 
   def fetchOrders

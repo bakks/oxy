@@ -64,6 +64,7 @@ describe MtGox do
     @mtgox.fee.should == 0.006
     @mtgox.balance[:BTC].should == 25.035
     @mtgox.balance[:USD].should == 22.01601
+    @mtgox.monthlyVolume.should == 0.0
 
     verifyAccounts(@mtgox)
   end

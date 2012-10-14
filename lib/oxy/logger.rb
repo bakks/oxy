@@ -26,7 +26,7 @@ $_log = Logger.new(tee)
 $_log.level = Logger::INFO
 
 $_log.formatter = proc { |severity, stamp, prog, msg|
-  "#{severity.ljust(7)} #{stamp.getutc.strftime('%H:%M:%S.%L')} #{(prog or '').ljust(12)[0..11]} | #{msg}\n"
+  "#{stamp.getutc.strftime('%Y-%m-%dT%H:%M:%S.%6NZ')} #{severity.ljust(8)} #{(prog or '').ljust(12)[0..11]} | #{msg}\n"
 }
 
 class Log
