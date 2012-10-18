@@ -3,21 +3,29 @@ require 'thread'
 class Timer
   @@log = Log.new 'timer'
   @@label = :tick
+  @@interval = 1
+  @@thread = nil
 
-  def initialize interval, schedule
+  def initialize 
     @@log.info 'running timer'
-    @interval = interval
-    @schedule = schedule
-    @thread = Thread.new { run } unless @thread
+    @@interval = $config['timer']['interval']
+    @@thread = Thread.new { run } unless @@thread
+  end
+
+  def self.instance schedule
+    @@schedule = schedule
   end
 
   def run
     while true
-      sleep @interval
+      sleep @@interval
+      next unless @@schedule
       @@log.info 'timer tick'
-      @schedule.push @@label
+      @@schedule.push @@label
     end
   end
 
+  @@instance = Timer.new
+  private_class_method :new
 end
 

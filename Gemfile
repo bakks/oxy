@@ -7,6 +7,8 @@ gem 'mongo'
 gem 'mechanize'
 gem 'faraday'
 gem 'json'
+gem 'hash-deep-merge'
+gem 'daemons'
 
 gem 'rspec'
 gem 'mocha'

@@ -1,3 +1,5 @@
+STDOUT.sync = true
+
 $env = :development
 e = ENV['OXY_ENVIRONMENT']
 
@@ -15,6 +17,8 @@ $log = Log.new 'oxy'
 $log.info "starting oxy at #{Time.now.getutc}..."
 $log.info "environment: #{$env}"
 
+require 'yaml'
+require_relative 'oxy/config'
 require_relative 'oxy/common'
 require_relative 'oxy/book'
 require_relative 'oxy/mtgox'
@@ -40,7 +44,7 @@ def init
   scheduler = Scheduler.new strat, mtgox
   $log.info 'initialized scheduler'
 
-  timer = Timer.new strat.interval, scheduler
+  timer = Timer.instance scheduler
   $log.info 'initialized timer'
 
   mtgox.start_stream scheduler
@@ -60,6 +64,7 @@ def run
   rescue Interrupt
     $log.info 'caught interrupt'
     scheduler.exchange.cancelAll
+    scheduler.exchange.kill_stream
     $log.info 'exiting'
     exit
 
@@ -67,7 +72,16 @@ def run
     $log.info "caught exception: #{e}"
     begin
       scheduler.exchange.cancelAll
-    rescue
+      scheduler.exchange.kill_stream
+    rescue Exception => e2
+      $log.info "exception while exiting: #{e2}"
     end
     $log.info 'exiting'
+    exit
 end
+
+while true
+  run
+  sleep 60
+end
+

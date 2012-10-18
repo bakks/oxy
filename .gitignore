@@ -2,3 +2,4 @@
 apioutput
 logs/*
 logs.old/*
+run/*

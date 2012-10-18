@@ -1,10 +1,10 @@
 require_relative 'strategy'
 
 class DepthStrategy < Strategy
-  @@placementDepth    = 10
-  @@placementInterval = 0.001
-  @@priceThreshold    = 0.0
-  @@defaultSize       = 0.1
+  @@placementDepth    = $config['depth_strategy']['placement_depth']
+  @@placementInterval = $config['depth_strategy']['placement_interval']
+  @@priceThreshold    = $config['depth_strategy']['price_threshold']
+  @@defaultSize       = $config['depth_strategy']['default_size']
 
   def initialize exchange
     super 'depthstrat', exchange

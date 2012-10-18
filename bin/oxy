@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+
+require 'daemons'
+
+ENV['OXY_ENVIRONMENT'] = 'production'
+
+this_file = File.symlink?(__FILE__) ? File.readlink(__FILE__) : __FILE__
+
+opt = {
+  :app_name   => 'oxy',
+  :dir_mode   => :normal,
+  :dir        => File.dirname(this_file) + '/../run',
+  :multiple   => false,
+  :monitor    => true,
+  :backtrace  => true,
+  :log_output => true
+}
+
+script = File.dirname(this_file) + '/../lib/oxy.rb'
+
+Daemons.run(script, opt)
+

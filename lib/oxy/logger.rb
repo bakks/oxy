@@ -15,9 +15,11 @@ class MultiIO
   end
 end
 
-filename = Time.now.strftime('../logs/oxy.%Y%m%d.%H%M%S.log')
+filename = File.dirname(__FILE__) + '/../../logs/' + Time.now.strftime('oxy.%Y%m%d.%H%M%S.log')
 if $env == :production
-  tee = MultiIO.new(STDOUT, File.open(filename, 'a'))
+  file = File.open(filename, 'a')
+  file.sync = true
+  tee = MultiIO.new(STDOUT, file)
 else
   tee = STDOUT
 end

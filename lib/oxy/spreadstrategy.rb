@@ -1,17 +1,15 @@
 require_relative 'strategy'
 
 class SpreadStrategy < Strategy
-  @@interval          = 15
-  @@takeRate          = 0.1
-  @@takeIncrement     = 0.2
-  @@levels            = 1
-  @@defaultSize       = 5
-  @@priceThreshold    = 0.005
+  @@takeRate          = $config['spread_strategy']['take_rate']
+  @@takeIncrement     = $config['spread_strategy']['take_increment']
+  @@levels            = $config['spread_strategy']['levels']
+  @@defaultSize       = $config['spread_strategy']['default_size']
+  @@priceThreshold    = $config['spread_strategy']['price_threshold']
 
   def initialize exchange
     super 'spreadstrat', exchange
 
-    @log.info "interval        : #{@@interval}"
     @log.info "takeRate        : #{@@takeRate}"
     @log.info "takeIncrement   : #{@@takeIncrement}"
     @log.info "levels          : #{@@levels}"
@@ -22,10 +20,6 @@ class SpreadStrategy < Strategy
 
   def takeRate
     @@takeRate
-  end
-
-  def interval
-    @@interval
   end
 
   def priceThreshold

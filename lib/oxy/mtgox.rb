@@ -112,6 +112,10 @@ class MtGox
     return @stream
   end
 
+  def kill_stream
+    @stream.stop if @stream
+  end
+
   def msg msg
     @stream_timestamp = Time.now.getutc
     chan = msg['channel']
@@ -325,7 +329,7 @@ class MtGox
     response = JSON(r.body)
     Persistence::writeHttpRequest r.uri.to_s, t, r.code, response
 
-    @@log.debug "post #{@mtgox_cancel} token=#{@token}&oid=#{order.extId}"
+    @@log.info "post #{@mtgox_cancel} token=#{@token}&oid=#{order.extId}"
     @@log.warn "got back #{r.code} from #{@mtgox_cancel}" unless r.code.to_i == 200
     @@log.warn "failed to cancel with error: #{response['error']}" if response['error']
 
@@ -504,7 +508,7 @@ class MtGox
       'Content-type' => 'application/x-www-form-urlencoded'
     }
 
-    @@log.debug "post #{path} #{body}"
+    @@log.info "post #{path} #{body}"
     t = Time.now
     response = @client.post(path, body, headers)
 
