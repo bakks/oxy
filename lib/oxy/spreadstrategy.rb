@@ -33,6 +33,15 @@ class SpreadStrategy < Strategy
   def setOrders book
     fee = @exch.fee
     midpt = @exch.midpoint
+    bidSize = @@defaultSize
+    askSize = @@defaultSize
+
+    puts @exch.balance[:BTC].to_s + "   " + @exch.balance[:USD].to_s
+    if @exch.balance[:BTC] > @exch.balance[:USD]
+      askSize *= 2
+    elsif @exch.balance[:BTC] < @exch.balance[:USD]
+      bidSize *= 2
+    end
 
     for i in 0..(@@levels - 1)
       halfSpreadPerc = fee * (1 + @@takeRate + @@takeIncrement * i)
@@ -40,8 +49,8 @@ class SpreadStrategy < Strategy
       bidPrice = midpt - halfSpread
       askPrice = midpt + halfSpread
 
-      bid = Quote.new true, bidPrice, @@defaultSize
-      ask = Quote.new false, askPrice, @@defaultSize
+      bid = Quote.new true, bidPrice, bidSize
+      ask = Quote.new false, askPrice, askSize
 
       book.set bid
       book.set ask

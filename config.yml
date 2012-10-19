@@ -1,12 +1,12 @@
 all:
   timer:
-    interval: 15
+    interval: 10
   spread_strategy:
-    take_rate: 0.1
+    take_rate: 0.15
     take_increment: 0.2
     levels: 1
-    default_size: 5
-    price_threshold: 0.005
+    default_size: 4
+    price_threshold: 0.003
   depth_strategy:
     placement_depth: 10
     placement_interval: 0.001

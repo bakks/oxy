@@ -25,7 +25,7 @@ class Timer
     end
   end
 
-  @@instance = Timer.new
+  @@instance = Timer.new if $env == :production
   private_class_method :new
 end
 

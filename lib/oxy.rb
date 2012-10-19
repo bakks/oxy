@@ -80,7 +80,7 @@ def run
     exit
 end
 
-while true
+while $env == :production
   run
   sleep 60
 end
